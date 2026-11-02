@@ -1,0 +1,23 @@
+# 统一使用 LF 入库，Windows 批处理保留 CRLF，二进制文件不做换行转换
+* text=auto
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh  text eol=lf
+*.py  text eol=lf
+*.js  text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md  text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.gz binary
+*.zip binary
+*.woff binary
+*.woff2 binary

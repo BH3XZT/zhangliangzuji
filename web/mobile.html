@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>轨迹同步上传 · 地图轨迹合并</title>
+  <meta name="description" content="手机扫码后，把 App 导出的 GPX / KML / JSON 等轨迹文件上传到 NAS 轨迹库。">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/mobile.css">
+</head>
+<body>
+  <main class="m-wrap">
+    <header class="m-header">
+      <div class="m-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20 3 17V4l6 3 6-3 6 3v13l-6-3-6 3Z"/><path d="M9 7v13M15 4v13"/></svg>
+      </div>
+      <div class="m-brand-text">
+        <h1>轨迹同步上传</h1>
+        <p>把手机里的轨迹文件上传到 NAS 轨迹库</p>
+      </div>
+    </header>
+
+    <section class="m-card token-card">
+      <div class="m-status" id="tokenStatus">正在校验上传令牌…</div>
+      <p class="m-sub">如提示令牌无效/过期，请回到电脑端「同步」页刷新二维码后重新扫码。</p>
+    </section>
+
+    <section class="m-card">
+      <div class="m-card-head">
+        <h2>选择轨迹文件</h2>
+        <span class="m-count" id="fileCount">0 个文件</span>
+      </div>
+      <label class="m-drop" id="dropZone" for="fileInput">
+        <div class="m-drop-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        </div>
+        <p class="m-drop-title">点击选择文件，或拖拽到这里</p>
+        <p class="m-hint">支持 GPX / KML / KMZ / TCX / GeoJSON / CSV / JSON / NMEA / FIT，可多选</p>
+        <input type="file" id="fileInput" multiple hidden>
+      </label>
+      <div class="m-files" id="fileList"></div>
+      <button type="button" class="m-btn primary" id="btnUpload" disabled>开始上传</button>
+      <div class="m-progress" id="progressWrap" hidden>
+        <div class="m-bar"><i id="progressBar"></i></div>
+        <span id="progressText">准备上传…</span>
+      </div>
+    </section>
+
+    <section class="m-card" id="resultCard" hidden>
+      <div class="m-card-head"><h2>上传结果</h2><span class="m-count" id="resultTime"></span></div>
+      <div class="m-result" id="resultBody"></div>
+      <button type="button" class="m-btn ghost" id="btnAgain">继续上传</button>
+    </section>
+
+    <section class="m-card m-info">
+      <h2>使用说明</h2>
+      <ul>
+        <li>手机与 NAS / 电脑需在<strong>同一局域网</strong>；二维码与上传链接 30 分钟内有效。</li>
+        <li>百度地图、高德地图、腾讯地图、Google 地图等 App 没有公开的个人轨迹同步接口，请先在 App 内把轨迹<strong>导出为 GPX / KML / JSON / CSV</strong> 等文件，再在本页上传。</li>
+        <li>上传后会立即解析并存入 NAS 轨迹库，可在电脑端「地图总览」查看；重复轨迹会自动跳过。</li>
+        <li>文件仅在本机 / NAS 上解析，不会上传到任何第三方服务。</li>
+      </ul>
+    </section>
+
+    <footer class="m-foot">地图轨迹合并 · 本机 / NAS 私有部署</footer>
+  </main>
+
+  <div class="m-toast" id="toast" hidden></div>
+
+  <script src="/static/mobile.js"></script>
+</body>
+</html>

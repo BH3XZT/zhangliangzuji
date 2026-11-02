@@ -1,0 +1,38 @@
+# 地图轨迹合并工具 —— Docker Compose 编排
+#
+# 常用命令：
+#   docker compose up -d --build   # 构建镜像并在后台启动（或直接运行 start.bat / ./start.sh）
+#   docker compose ps              # 查看容器状态与健康检查结果
+#   docker compose logs -f         # 跟随查看日志
+#   docker compose down            # 停止并移除容器（./data 中的数据保留）
+#
+# 修改宿主机端口：在项目根目录新建 .env 文件，写入 MAPTRACK_PORT=9000，然后重新启动。
+# 容器内部端口固定为 8000，不需要改动。
+
+name: maptrack-merger
+
+services:
+  maptrack:
+    build: .
+    image: maptrack-merger:1.1.0
+    container_name: maptrack-merger
+    ports:
+      - "${MAPTRACK_PORT:-8000}:8000"
+    volumes:
+      # 宿主机 ./data 挂载到容器 /app/data；容器内以 uid 10001 运行
+      # Linux 下若出现 Permission denied，请执行：sudo chown -R 10001:10001 ./data
+      - ./data:/app/data
+    environment:
+      TZ: "Asia/Shanghai"
+      PORT: "8000"
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      LANG: "C.UTF-8"
+    restart: unless-stopped
+    healthcheck:
+      # 与 Dockerfile 中的 HEALTHCHECK 保持一致：python 标准库 urllib 请求 /api/health
+      test: ["CMD", "python", "-c", "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

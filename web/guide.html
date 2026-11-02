@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0ea5e9">
+  <title>轨迹导出操作指南 · 地图轨迹合并</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --card: #fff;
+      --text: #0f172a;
+      --text-2: #475569;
+      --muted: #94a3b8;
+      --border: #e2e8f0;
+      --accent: #0ea5e9;
+      --accent-dark: #0369a1;
+      --accent-soft: #e0f2fe;
+      --success: #15803d;
+      --success-soft: #ecfdf5;
+      --warning: #b45309;
+      --warning-soft: #fffbeb;
+      --danger: #b91c1c;
+      --danger-soft: #fef2f2;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", Roboto, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(1000px 420px at 50% -8%, #dff3ff 0%, rgba(223, 243, 255, 0) 62%), linear-gradient(180deg, #eef7fc, var(--bg) 36%);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 22px 18px 60px; }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    .back { color: var(--accent-dark); text-decoration: none; font-size: 13.5px; font-weight: 600; }
+    .back:hover { text-decoration: underline; }
+    .hero {
+      padding: 24px 26px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #0b4f72, #0e7490 50%, #0ea5e9);
+      color: #f0f9ff;
+      box-shadow: 0 24px 50px -30px rgba(2, 132, 199, 0.65);
+    }
+    .hero h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: 0.3px; }
+    .hero p { margin: 0; color: #d8f3ff; font-size: 14px; }
+    .hero .badge { display: inline-block; margin-top: 14px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.16); font-size: 12px; color: #e0f2fe; }
+    .notice {
+      margin: 16px 0 0;
+      padding: 14px 16px;
+      border: 1px solid #bae6fd;
+      border-radius: 14px;
+      background: #f0f9ff;
+      color: #075985;
+      font-size: 13.5px;
+    }
+    .notice strong { color: #0c4a6e; }
+    .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0 6px; }
+    .step { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px; }
+    .step b { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; margin-right: 6px; background: var(--accent-soft); color: var(--accent-dark); font-size: 12px; }
+    .step h3 { margin: 0 0 4px; font-size: 14px; }
+    .step p { margin: 0; font-size: 12.5px; color: var(--text-2); }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 22px 0 12px; }
+    .search {
+      flex: 1 1 260px;
+      min-width: 0;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: #fff;
+      font: inherit;
+      font-size: 13.5px;
+      color: var(--text);
+      outline: none;
+    }
+    .search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.14); }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { border: 1px solid var(--border); background: #fff; color: var(--text-2); border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+    .chip.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-dark); font-weight: 600; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .card { border: 1px solid var(--border); border-radius: 14px; background: var(--card); overflow: hidden; }
+    .card summary {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+      padding: 14px 16px; cursor: pointer; list-style: none; user-select: none;
+    }
+    .card summary::-webkit-details-marker { display: none; }
+    .card summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .app-name { font-size: 15px; font-weight: 700; }
+    .badge { padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+    .badge.ok { background: var(--success-soft); color: var(--success); border: 1px solid #bbf7d0; }
+    .badge.no { background: var(--danger-soft); color: var(--danger); border: 1px solid #fecaca; }
+    .badge.fmt { background: #f1f5f9; color: var(--text-2); border: 1px solid var(--border); }
+    .summary-meta { margin-left: auto; color: var(--muted); font-size: 12px; }
+    .card[open] summary { background: #f8fbfe; border-bottom: 1px solid var(--border); }
+    .body { padding: 14px 16px 16px; }
+    .body ol, .body ul { margin: 0 0 10px; padding-left: 20px; color: var(--text-2); font-size: 13.5px; }
+    .body li { margin: 4px 0; }
+    .body p { margin: 8px 0; font-size: 13px; color: var(--text-2); }
+    .body a { color: var(--accent-dark); }
+    .note { padding: 9px 11px; border-radius: 9px; background: var(--warning-soft); border: 1px solid #fde68a; color: #92400e; font-size: 12.5px; }
+    .no-export { padding: 9px 11px; border-radius: 9px; background: var(--danger-soft); border: 1px solid #fecaca; color: #991b1b; font-size: 12.5px; }
+    .template { margin-top: 22px; border: 1px solid var(--border); border-radius: 16px; background: #fff; padding: 18px 18px 16px; }
+    .template h2 { margin: 0 0 6px; font-size: 17px; }
+    .template p { margin: 0 0 10px; color: var(--text-2); font-size: 13px; }
+    .template pre {
+      margin: 0; padding: 13px 14px; border-radius: 11px; background: #0f172a; color: #e2e8f0;
+      font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+    }
+    .copy-btn { margin-top: 10px; border: 1px solid var(--border); background: #f8fafc; border-radius: 9px; padding: 7px 12px; font: inherit; font-size: 12.5px; cursor: pointer; color: var(--text-2); }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .upload { margin-top: 22px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .upload a { display: block; text-decoration: none; color: inherit; border: 1px solid var(--border); border-radius: 14px; background: #fff; padding: 14px 15px; transition: border-color .15s, transform .15s; }
+    .upload a:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .upload b { display: block; font-size: 14px; color: var(--accent-dark); margin-bottom: 3px; }
+    .upload span { font-size: 12.5px; color: var(--text-2); }
+    .foot { margin-top: 26px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .hidden { display: none !important; }
+    @media (max-width: 760px) {
+      .wrap { padding: 14px 12px 44px; }
+      .hero { padding: 18px 16px; border-radius: 16px; }
+      .hero h1 { font-size: 22px; }
+      .steps, .upload { grid-template-columns: 1fr; }
+      .summary-meta { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="/">← 返回地图轨迹合并</a>
+    <a class="back" href="/#sync">去同步中心上传 →</a>
+  </div>
+
+  <header class="hero">
+    <h1>轨迹导出操作指南</h1>
+    <p>把散落在各个 App 里的轨迹先导出成文件，再汇总到 NAS 的一张地图上。</p>
+    <span class="badge">GPX · KML · KMZ · TCX · GeoJSON · JSON · CSV · FIT</span>
+  </header>
+
+  <div class="notice">
+    <strong>本工具不提供第三方 App 的账号扫码登录。</strong>
+    百度/高德/腾讯/Google 等官方 App 没有公开的个人轨迹同步接口，逆向登录会有账号风险。请在原 App 内导出轨迹文件（或用下方申请模板向客服申请个人信息副本），再通过「同步」页二维码上传，或放进 NAS 的 <code>data/inbox/</code> 文件夹扫描入库。
+  </div>
+
+  <div class="steps">
+    <div class="step"><h3><b>1</b>在原 App 导出</h3><p>按下面各 App 的步骤，把轨迹导出为 GPX/KML/JSON/CSV 等文件。</p></div>
+    <div class="step"><h3><b>2</b>传到 NAS</h3><p>手机扫「同步」页二维码上传，或把文件放进 <code>data/inbox/</code>。</p></div>
+    <div class="step"><h3><b>3</b>自动入库</h3><p>上传自动解析；文件夹方式点「扫描并入库」。之后到地图总览/里程碑查看。</p></div>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" class="search" type="search" placeholder="搜索 App 或格式，例如：华为、两步路、GPX、Google…" autocomplete="off">
+    <div class="chips" id="chips">
+      <button class="chip is-active" type="button" data-cat="all">全部</button>
+      <button class="chip" type="button" data-cat="nav">地图导航</button>
+      <button class="chip" type="button" data-cat="sport">运动/户外</button>
+      <button class="chip" type="button" data-cat="google">Google</button>
+      <button class="chip" type="button" data-cat="other">其他</button>
+    </div>
+  </div>
+
+  <section class="grid" id="cards">
+    <details class="card" data-cat="nav" data-keywords="百度 baidu 足迹 轨迹 个人信息副本">
+      <summary><span class="app-name">百度地图</span><span class="badge no">官方无直接导出</span><span class="badge fmt">需申请数据副本</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <p>截至本指南编写时，百度地图 App 的「足迹/行程」面向普通用户主要是查看和分享，没有稳定的 GPX/KML 轨迹文件导出入口（如果新版本新增入口，以 App 内为准）。</p>
+        <ol>
+          <li>先在「我的 → 足迹/行程」里找「导出 / 下载 / 分享文件」；多数版本只有生成图片。</li>
+          <li>找不到时，通过 App「我的 → 客服/帮助与反馈」提交个人信息副本申请（见页面下方模板）。</li>
+          <li>开发者接入百度鹰眼轨迹服务的数据可在开放平台导出 JSON，但那只适用于你自己接入的数据，不是普通用户足迹。</li>
+          <li>如果只是想把轨迹汇总，建议今后使用下方支持导出的运动/户外 App 记录。</li>
+        </ol>
+        <p class="note">百度地图开放平台：<a href="https://lbsyun.baidu.com/" target="_blank" rel="noopener">lbsyun.baidu.com</a>（面向开发者，不是普通用户足迹导出）</p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="nav" data-keywords="高德 amap 足迹 轨迹 个人信息副本">
+      <summary><span class="app-name">高德地图</span><span class="badge no">官方无直接导出</span><span class="badge fmt">需申请数据副本</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <p>高德地图 App 的「足迹」通常只能查看/分享图片，没有面向普通用户的轨迹文件导出入口（以当前版本为准）。</p>
+        <ol>
+          <li>打开「我的 → 足迹」确认是否有导出/下载按钮。</li>
+          <li>没有的话，通过「设置 → 帮助与客服」提交个人信息副本申请（账号、时间范围、位置/轨迹数据）。</li>
+          <li>高德开放平台的猎鹰轨迹接口面向开发者，不能直接导出个人足迹。</li>
+        </ol>
+        <p class="note">高德开放平台：<a href="https://lbs.amap.com/" target="_blank" rel="noopener">lbs.amap.com</a></p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="nav" data-keywords="腾讯地图 足迹 轨迹 个人信息副本">
+      <summary><span class="app-name">腾讯地图</span><span class="badge no">官方无直接导出</span><span class="badge fmt">需申请数据副本</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <p>腾讯地图的足迹/历史行程通常只能查看，路线分享链接不是轨迹文件，不能直接导入。</p>
+        <ol>
+          <li>在 App 内查看是否存在「导出/下载」入口。</li>
+          <li>没有的话，通过腾讯地图客服或腾讯隐私保护平台提交个人信息副本申请。</li>
+          <li>建议今后使用支持 GPX 导出的运动/户外 App 记录。</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="card" data-cat="sport" data-keywords="华为运动健康 手表 跑步 骑行 步行 gpx">
+      <summary><span class="app-name">华为运动健康</span><span class="badge ok">官方支持导出</span><span class="badge fmt">GPX / 路线文件</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>打开华为运动健康 App → 运动页，点击「累计跑步 / 累计骑行 / 累计步行」。</li>
+          <li>选择一条有轨迹的户外运动记录，进入轨迹页面。</li>
+          <li>点击右侧「路线」图标 →「导出路线文件」→ 确定 → 选择保存/分享方式。</li>
+        </ol>
+        <p class="note">仅户外跑步、户外骑行、户外步行支持；HarmonyOS 5 及以上路径略有不同。</p>
+        <p><a href="https://consumer.huawei.com/cn/support/content/zh-cn15893332/" target="_blank" rel="noopener">华为官方说明 ↗</a></p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="sport" data-keywords="garmin 佳明 connect gpx tcx fit">
+      <summary><span class="app-name">Garmin Connect</span><span class="badge ok">官方支持导出</span><span class="badge fmt">GPX / TCX / FIT</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>打开 Garmin Connect 网页或 App → 活动记录。</li>
+          <li>进入某条活动 → 右上角「…」→「导出」。</li>
+          <li>选择 GPX（轨迹）、TCX（含训练数据）或 FIT（原始文件），本工具三种都支持。</li>
+          <li>批量导出可在网页版账户设置里查找「导出数据」。</li>
+        </ol>
+        <p><a href="https://connect.garmin.com/" target="_blank" rel="noopener">Garmin Connect ↗</a></p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="sport" data-keywords="strava gpx tcx fit 骑行 跑步">
+      <summary><span class="app-name">Strava</span><span class="badge ok">官方支持导出</span><span class="badge fmt">GPX / TCX / FIT</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>打开 Strava 网页版 → 进入某条活动。</li>
+          <li>「更多 / …」→「导出 GPX」或「导出原始文件」。</li>
+          <li>也可在活动地址后加 <code>/export_tcx</code> 下载 TCX。</li>
+          <li>批量导出：Settings → My Account → Download your account。</li>
+        </ol>
+        <p class="note">仅 GPS 活动能导出有效 GPX；室内活动可能为空文件。</p>
+        <p><a href="https://support.strava.com/hc/en-us/articles/216918437-Exporting-your-Data-and-Bulk-Export" target="_blank" rel="noopener">Strava 官方说明 ↗</a></p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="sport" data-keywords="两步路 2bulu 户外 徒步 gpx kml">
+      <summary><span class="app-name">两步路</span><span class="badge ok">支持导出</span><span class="badge fmt">GPX / KML</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>打开两步路 App → 我的 → 轨迹。</li>
+          <li>选择目标轨迹，进入轨迹详情页，找「分享 / 更多 / 导出」。</li>
+          <li>选择导出 GPX 或 KML，保存到手机文件。</li>
+        </ol>
+        <p class="note">不同版本入口略有差异；若只有分享图片，先在 App 内搜索「导出轨迹」或更新到最新版。</p>
+        <p><a href="https://www.2bulu.com/" target="_blank" rel="noopener">两步路官网 ↗</a></p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="sport" data-keywords="六只脚 foooooot 户外 徒步 kml gpx">
+      <summary><span class="app-name">六只脚</span><span class="badge ok">支持导出</span><span class="badge fmt">KML / GPX</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>打开六只脚 App → 我的 → 轨迹。</li>
+          <li>进入轨迹详情，找「导出 / 下载 / 分享轨迹文件」。</li>
+          <li>常见导出格式为 KML 或 GPX，保存到手机后上传。</li>
+        </ol>
+        <p><a href="http://www.foooooot.com/" target="_blank" rel="noopener">六只脚官网 ↗</a></p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="sport" data-keywords="行者 骑行 imxingzhe gpx 路书">
+      <summary><span class="app-name">行者</span><span class="badge ok">支持导出</span><span class="badge fmt">GPX</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>打开行者 App → 运动记录或路书详情。</li>
+          <li>选择目标记录 → 分享/更多 → 导出 GPX（部分版本在路书页面提供 GPX 下载）。</li>
+        </ol>
+        <p class="note">路书导出不一定包含你的实际运动时间；运动记录导出才含完整时间轴。</p>
+        <p><a href="https://hc.imxingzhe.com/hc/xing/articles/1702280960-gpx-gpx" target="_blank" rel="noopener">行者 GPX 说明 ↗</a></p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="sport" data-keywords="奥维互动地图 ovital kml 轨迹">
+      <summary><span class="app-name">奥维互动地图</span><span class="badge ok">支持导出</span><span class="badge fmt">KML / GPX</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>打开奥维互动地图 → 收藏/轨迹。</li>
+          <li>选择目标轨迹或对象 → 导出 → KML/GPX（不同版本入口不同）。</li>
+          <li>若导出坐标是百度/高德偏移坐标，导入时在文件卡片切换对应坐标系。</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="card" data-cat="sport" data-keywords="apple 健康 iphone watch 路线 gpx workout-routes">
+      <summary><span class="app-name">Apple 健康（iPhone / Apple Watch）</span><span class="badge ok">支持导出</span><span class="badge fmt">GPX（workout-routes）</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>iPhone 打开「健康」App → 右上角头像。</li>
+          <li>滑到底部 →「导出所有健康数据」→ 导出。</li>
+          <li>解压 <code>export.zip</code>，进入 <code>workout-routes/</code> 文件夹，里面有带 GPS 的运动路线 <code>.gpx</code> 文件。</li>
+          <li>上传这些 GPX 即可。</li>
+        </ol>
+        <p class="note">没有 GPS 路线的运动不会生成 GPX；导出包较大时建议在电脑上解压。</p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="google" data-keywords="google 时间线 timeline location history takeout json">
+      <summary><span class="app-name">Google 地图 / 时间线</span><span class="badge ok">官方支持导出</span><span class="badge fmt">JSON（Takeout）</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>打开 <a href="https://takeout.google.com/" target="_blank" rel="noopener">takeout.google.com</a> 并登录 Google 账号。</li>
+          <li>点「取消全选」，只勾选「位置记录 / Location History」。</li>
+          <li>创建导出并下载；包内常见为 <code>Records.json</code> 或 <code>Semantic Location History/年/年_月.json</code>。</li>
+          <li>把 JSON 直接上传本工具，会自动识别为「Google 时间线」。</li>
+        </ol>
+        <p class="note">2024 年起 Google 逐步把时间线迁移到设备端，部分账号的 Takeout 可能不再包含最新时间线；如导出包没有位置记录，以 Google 地图当前帮助为准。</p>
+      </div>
+    </details>
+
+    <details class="card" data-cat="other" data-keywords="keep 悦跑圈 咕咚 nike 运动 无导出">
+      <summary><span class="app-name">Keep / 悦跑圈 / 咕咚 / Nike Run Club 等</span><span class="badge no">通常无官方导出</span><span class="badge fmt">需申请数据副本</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <p>这些运动 App 通常没有公开的 GPX/KML 导出入口：</p>
+        <ol>
+          <li>先找「设置 → 隐私 → 个人信息副本 / 下载我的数据」。</li>
+          <li>没有的话，按下方模板联系客服申请。</li>
+          <li>今后可改用华为运动健康、Garmin、Strava、两步路、六只脚、行者等支持导出的 App。</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="card" data-cat="other" data-keywords="gpsbabel 转换 kml csv fit tcx gpx">
+      <summary><span class="app-name">通用转换工具 GPSBabel</span><span class="badge ok">格式转换</span><span class="badge fmt">任意 → GPX</span><span class="summary-meta">查看步骤 ▾</span></summary>
+      <div class="body">
+        <ol>
+          <li>如果导出的是 KML/CSV/FIT/TCX，先直接尝试上传，本工具大多能自动识别。</li>
+          <li>遇到不支持的格式，可在电脑安装 <a href="https://www.gpsbabel.org/" target="_blank" rel="noopener">GPSBabel</a>，把它转换为 GPX 后再上传。</li>
+          <li>截图、录屏、路线分享链接不是轨迹文件，无法还原成完整轨迹。</li>
+        </ol>
+      </div>
+    </details>
+  </section>
+
+  <section class="template">
+    <h2>个人信息副本申请模板</h2>
+    <p>百度/高德/腾讯等 App 若没有导出入口，可用下面模板发给客服，按《个人信息保护法》第四十五条申请复制本人个人信息。</p>
+    <pre id="templateText">主题：申请导出本人账号下的个人信息副本（位置/轨迹数据）
+
+账号：&lt;注册手机号或账号&gt;
+时间范围：&lt;例如 2023-01-01 至今&gt;
+数据内容：本人使用该 App 产生的轨迹/位置记录（经纬度、时间、海拔等）
+文件格式：GPX / KML / JSON / CSV 均可
+用途：个人数据备份与导入本人 NAS 的轨迹管理工具
+依据：《中华人民共和国个人信息保护法》第四十五条（查阅、复制个人信息）
+联系方式：&lt;手机号/邮箱&gt;
+
+请告知是否需要补充身份验证材料，谢谢。</pre>
+    <button class="copy-btn" type="button" id="copyTemplate">复制模板</button>
+  </section>
+
+  <section class="upload">
+    <a href="/#sync"><b>① 扫码上传</b><span>电脑打开「同步」页生成二维码，手机扫码选择轨迹文件。</span></a>
+    <a href="/#sync"><b>② NAS 同步文件夹</b><span>把文件放进 data/inbox/，在「同步」页点「扫描并入库」。</span></a>
+    <a href="/#import"><b>③ 直接导入</b><span>在「导入合并」页拖拽文件，解析后可保存到轨迹库。</span></a>
+  </section>
+
+  <p class="foot">
+    支持格式：GPX / KML / KMZ / TCX / GeoJSON / 通用 JSON / 百度地图 JSON / 高德地图 JSON / Google 时间线 / CSV / TSV / NMEA / FIT。<br>
+    App 菜单可能随版本更新变化；以上路径仅供参考，以各 App 当前版本为准。所有文件只在本机 / NAS 上解析，不上传到任何第三方服务。
+  </p>
+</div>
+
+<script>
+  (function () {
+    var search = document.getElementById('search');
+    var cards = Array.prototype.slice.call(document.querySelectorAll('#cards .card'));
+    var chips = Array.prototype.slice.call(document.querySelectorAll('#chips .chip'));
+    var activeCat = 'all';
+
+    function applyFilter() {
+      var q = (search.value || '').trim().toLowerCase();
+      cards.forEach(function (card) {
+        var catOk = activeCat === 'all' || card.dataset.cat === activeCat;
+        var textOk = !q || (card.dataset.keywords + ' ' + card.textContent).toLowerCase().indexOf(q) >= 0;
+        card.classList.toggle('hidden', !(catOk && textOk));
+        if (!catOk || !textOk) card.open = false;
+      });
+    }
+
+    search.addEventListener('input', applyFilter);
+    chips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        activeCat = chip.dataset.cat;
+        chips.forEach(function (c) { c.classList.toggle('is-active', c === chip); });
+        applyFilter();
+      });
+    });
+
+    var copyBtn = document.getElementById('copyTemplate');
+    var template = document.getElementById('templateText');
+    copyBtn.addEventListener('click', function () {
+      var text = template.textContent;
+      function done() {
+        copyBtn.textContent = '已复制';
+        window.setTimeout(function () { copyBtn.textContent = '复制模板'; }, 1800);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+      } else {
+        fallback();
+      }
+      function fallback() {
+        var area = document.createElement('textarea');
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand('copy'); done(); } catch (e) { copyBtn.textContent = '请手动选择复制'; }
+        document.body.removeChild(area);
+      }
+    });
+  })();
+</script>
+</body>
+</html>

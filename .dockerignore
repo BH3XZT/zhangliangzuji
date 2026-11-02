@@ -1,0 +1,44 @@
+# Docker 构建上下文排除清单
+# 镜像里只需要 app/、web/、samples/、geo/ 四个目录（见 Dockerfile 的 COPY 指令），
+# 其余内容一律不进构建上下文，可加快构建速度、减小镜像体积。
+# 注意：geo/ 是里程碑功能必需的离线行政区划数据，千万不要加入本文件；docs/ 截图不进镜像。
+
+# ---- Git ----
+.git
+.gitignore
+.gitattributes
+
+# ---- 运行时数据（由 compose 挂载宿主机 ./data）----
+data/
+
+# ---- 测试与开发缓存 ----
+tests/
+tools/
+.geo_cache/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# ---- 文档与内部规范（运行镜像不需要；README 也不用进镜像）----
+*.md
+docs/
+_SPEC*.md
+
+# ---- 一键脚本（容器内不需要）----
+start.*
+stop.*
+
+# ---- 编排文件与系统/编辑器杂项 ----
+docker-compose.yml
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+.vscode/
+.idea/
