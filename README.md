@@ -662,7 +662,7 @@ docker compose up -d           # 用新镜像重启容器
 docker compose down
 
 # 2. 删除镜像（可选）
-docker rmi maptrack-merger:1.1.0
+docker rmi maptrack-merger:1.3.0
 
 # 3. 删除整个项目文件夹（含 data/，轨迹库与同步文件都在其中；如需保留请先备份 data 目录）
 ```
