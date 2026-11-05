@@ -10,6 +10,18 @@
 
 适合部署在自己的电脑或家庭 NAS（如飞牛 fnOS）上：轨迹数据保存在本地 `data/` 目录，手机扫码即可上传，不上传任何云端服务。
 
+## 子项目：城市自驾等时圈地图（isochrone-drive-map）
+
+本仓库新增了一个独立的 Docker Compose 子项目 [`isochrone-drive-map/`](isochrone-drive-map/README.md)：
+
+- 以太原（37.8706, 112.5489）为中心，基于 Valhalla 计算 60/120/180/240 分钟自驾等时圈
+- 叠加本地 OSM 河流水系、中文城市标注，MapLibre GL JS + OpenStreetMap 底图
+- 三容器架构：Valhalla + FastAPI + Nginx，单端口对外（默认 8080）
+- 默认只下载山西/河北/河南/陕西约 276MB 的省级 OSM 数据，适合 8G–16G 内存的飞牛 NAS
+- 详细部署步骤见 [isochrone-drive-map/README.md](isochrone-drive-map/README.md)
+
+> 主项目（地图轨迹合并工具）与子项目互相独立，可分别部署。
+
 - 无需安装 Python、Node.js，无需 `pip install`，构建时只需要拉取一个基础镜像
 - 数据保存在本地/私有 NAS 的 `data/` 目录，不经过任何云端
 - 默认访问地址：<http://localhost:8000>（部署在 NAS 时用 `http://<NAS局域网IP>:8000`）

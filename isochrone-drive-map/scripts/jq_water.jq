@@ -1,0 +1,1 @@
+{type:"FeatureCollection", features: [.[].features[] | {type:"Feature", properties:{name:(.properties.name // ""), name_zh:(.properties["name:zh"] // ""), waterway:(.properties.waterway // "river")}, geometry:.geometry}]}

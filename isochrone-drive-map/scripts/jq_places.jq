@@ -1,0 +1,1 @@
+{type:"FeatureCollection", features: [.[].features[] | {type:"Feature", properties:{name:(.properties["name:zh"] // .properties.name // ""), name_zh:(.properties["name:zh"] // ""), place:(.properties.place // ""), population:(.properties.population // "")}, geometry:.geometry}] | map(select(.properties.name != ""))}

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0b3d91">
+  <title>城市自驾等时圈地图 · 太原</title>
+  <link rel="stylesheet" href="/vendor/maplibre-gl.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="map" aria-label="城市自驾等时圈地图"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>城市自驾等时圈</h1>
+        <p>太原 · 60 / 120 / 180 / 240 分钟</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="btn" id="btnReset">回到太原</button>
+      <button type="button" class="btn primary" id="btnRefresh">重新计算</button>
+    </div>
+  </header>
+
+  <div class="status" id="status">
+    <span class="status-dot"></span>
+    <span id="statusText">正在加载路网等时圈…</span>
+  </div>
+
+  <aside class="legend" aria-label="图例">
+    <h2>自驾可达时间</h2>
+    <ul class="legend-list" id="legendList"></ul>
+    <div class="legend-sep"></div>
+    <ul class="legend-list">
+      <li><i class="swatch river" aria-hidden="true"></i>河流 / 运河</li>
+      <li><i class="swatch city" aria-hidden="true"></i>城市标注</li>
+      <li><i class="swatch start" aria-hidden="true"></i>出发点</li>
+    </ul>
+    <p class="legend-hint">点击地图任意位置，可更换出发点</p>
+  </aside>
+
+  <aside class="overnight" id="overnight">
+    <span class="overnight-title">4h 内可达</span>
+    <span class="overnight-sub">建议过夜</span>
+  </aside>
+
+  <section class="meta-card" id="metaCard" hidden>
+    <div><span class="meta-label">等时圈</span><strong id="metaIso">—</strong></div>
+    <div><span class="meta-label">水系线条</span><strong id="metaWater">—</strong></div>
+    <div><span class="meta-label">城市标注</span><strong id="metaCity">—</strong></div>
+  </section>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>正在计算自驾等时圈…</p>
+    <span>首次请求需要几秒钟，请稍候</span>
+  </div>
+
+  <div class="error-toast" id="errorToast" hidden>
+    <strong>计算失败</strong>
+    <p id="errorText"></p>
+    <button type="button" class="btn" id="btnRetry">重试</button>
+  </div>
+
+  <footer class="credit">
+    等时圈：Valhalla · 数据 © OpenStreetMap contributors · 底图 OpenStreetMap raster
+  </footer>
+  <pre id="debug" aria-hidden="true"></pre>
+
+  <script src="/vendor/maplibre-gl.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

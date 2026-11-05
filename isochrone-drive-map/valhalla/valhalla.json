@@ -1,0 +1,16 @@
+{
+  "mjolnir": {
+    "tile_dir": "/custom_files/valhalla_tiles",
+    "tile_extract": "/custom_files/valhalla_tiles.tar",
+    "concurrency": 2
+  },
+  "httpd": {
+    "service": {
+      "listen": "0.0.0.0",
+      "port": 8002
+    }
+  },
+  "service": {
+    "use_httpd": true
+  }
+}
