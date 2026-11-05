@@ -320,7 +320,7 @@ def _valhalla_request(
         ],
         "polygons": True,
         "denoise": 1,
-        "generalize": 80,
+        "generalize": 200,
         "show_locations": False,
     }
     if options:
@@ -501,10 +501,10 @@ def isochrone_payload(payload: dict) -> dict:
         minutes = sorted({int(item) for item in raw_minutes})
     except (TypeError, ValueError) as exc:
         raise IsochroneError("minutes 必须是整数数组") from exc
-    if not minutes or len(minutes) > 4:
-        raise IsochroneError("minutes 必须包含 1~4 个时间")
-    if any(minute < 1 or minute > 480 for minute in minutes):
-        raise IsochroneError("minutes 必须在 1~480 之间")
+    if not minutes or len(minutes) > 10:
+        raise IsochroneError("minutes 必须包含 1~10 个时间")
+    if any(minute < 1 or minute > 600 for minute in minutes):
+        raise IsochroneError("分钟数必须在 1~600 之间（1~10 小时）")
 
     if not WATER_FILE.is_file() or not PLACES_FILE.is_file():
         raise IsochroneError(

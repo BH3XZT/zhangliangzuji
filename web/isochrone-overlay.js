@@ -3,10 +3,23 @@
   "use strict";
 
   var DEFAULT_CENTER = { lat: 37.8706, lon: 112.5489 };
-  var MINUTES = [60, 120, 180, 240];
-  var COLORS = { 60: "#0b3d91", 120: "#1d4ed8", 180: "#3b82f6", 240: "#7dd3fc" };
   var MODE_LABELS = { car: "汽车", motorcycle: "摩托车", bike: "自行车", walk: "步行" };
   var ROAD_LABELS = { highway: "高速优先", national: "国道/主干优先", balanced: "均衡", avoid_highway: "避开高速" };
+
+  function minutesForHours(hours) {
+    var result = [];
+    for (var hour = 1; hour <= hours; hour++) result.push(hour * 60);
+    return result;
+  }
+
+  function colorForHour(hour, total) {
+    var t = total <= 1 ? 0 : (hour - 1) / (total - 1);
+    var start = [11, 61, 145];
+    var end = [125, 211, 252];
+    var c = [];
+    for (var i = 0; i < 3; i++) c.push(Math.round(start[i] + (end[i] - start[i]) * t));
+    return "rgb(" + c.join(",") + ")";
+  }
 
   var state = {
     open: false,
@@ -20,6 +33,7 @@
     avoidFerries: false,
     avoidUnpaved: false,
     renderMode: "both",
+    hours: 4,
     isoLayers: [],
     cityLayer: null,
     startMarker: null,
@@ -69,12 +83,28 @@
     var render = document.querySelector('input[name="ovRenderMode"]:checked');
     var mode = document.querySelector('input[name="ovTravelMode"]:checked');
     var road = $("ovRoadPref");
+    var hours = $("ovHours");
     if (render) state.renderMode = render.value;
     if (mode) state.mode = mode.value;
     if (road) state.roadPref = road.value;
+    if (hours) state.hours = Math.max(1, Math.min(10, parseInt(hours.value, 10) || 4));
     state.avoidTolls = !!($("ovAvoidTolls") && $("ovAvoidTolls").checked);
     state.avoidFerries = !!($("ovAvoidFerries") && $("ovAvoidFerries").checked);
     state.avoidUnpaved = !!($("ovAvoidUnpaved") && $("ovAvoidUnpaved").checked);
+  }
+
+  function updateLegend() {
+    var box = $("ovIsoLegend");
+    if (!box) return;
+    box.innerHTML = "";
+    for (var hour = 1; hour <= state.hours; hour++) {
+      var span = document.createElement("span");
+      var swatch = document.createElement("i");
+      swatch.style.background = colorForHour(hour, state.hours);
+      span.appendChild(swatch);
+      span.appendChild(document.createTextNode(hour + " 小时"));
+      box.appendChild(span);
+    }
   }
 
   function motorized() {
@@ -95,18 +125,25 @@
         ? "Valhalla 无国道独立分类，国道/主干优先用高速与主干路权重近似。"
         : "步行 / 自行车不使用道路偏好、收费和非铺装选项。";
     }
+    var hoursHint = $("ovHoursHint");
+    if (hoursHint) {
+      hoursHint.textContent = state.hours > 4
+        ? "当前数据约覆盖太原周边 300km；超过 4 小时的范围可能被数据边界截断。"
+        : "显示 1 小时至所选小时的分层，最多 10 小时。";
+    }
     var badgeTitle = $("isoBadgeTitle");
     var badgeSub = $("isoBadgeSub");
     if (badgeTitle && badgeSub) {
+      var h = state.hours;
       if (state.mode === "walk") {
-        badgeTitle.textContent = "4h 步行范围";
+        badgeTitle.textContent = h + "h 步行范围";
         badgeSub.textContent = "轻松可达";
       } else if (state.mode === "bike") {
-        badgeTitle.textContent = "4h 骑行范围";
+        badgeTitle.textContent = h + "h 骑行范围";
         badgeSub.textContent = "量力而行";
       } else {
-        badgeTitle.textContent = "4h 内可达";
-        badgeSub.textContent = "建议过夜";
+        badgeTitle.textContent = h + "h 内可达";
+        badgeSub.textContent = h >= 4 ? "建议过夜" : "当日可达";
       }
     }
   }
@@ -173,26 +210,30 @@
   function drawIsochrone(features) {
     var map = getMap();
     if (!map) return;
+    var maxHour = state.hours;
     var byMinutes = {};
     features.forEach(function (feature) {
       var minutes = Number(feature.properties && feature.properties.minutes);
-      if (!COLORS[minutes]) return;
+      var hour = minutes / 60;
+      if (!isFinite(hour) || hour < 1 || hour > maxHour) return;
       (byMinutes[minutes] = byMinutes[minutes] || []).push(convertFeature(feature));
     });
-    MINUTES.slice().sort(function (a, b) { return b - a; }).forEach(function (minutes) {
+    var fillOpacity = maxHour >= 8 ? 0.10 : (maxHour >= 6 ? 0.13 : 0.22);
+    Object.keys(byMinutes).map(Number).sort(function (a, b) { return b - a; }).forEach(function (minutes) {
       var list = byMinutes[minutes];
       if (!list || !list.length) return;
       var colorOnly = state.renderMode === "color";
+      var color = colorForHour(minutes / 60, maxHour);
       var layer = L.geoJSON(
         { type: "FeatureCollection", features: list },
         {
           style: {
             stroke: !colorOnly,
-            color: COLORS[minutes],
-            weight: colorOnly ? 0 : (minutes === 60 ? 2.2 : 1.6),
-            opacity: colorOnly ? 0 : 0.92,
-            fillColor: COLORS[minutes],
-            fillOpacity: 0.23
+            color: color,
+            weight: colorOnly ? 0 : (minutes === 60 ? 2.2 : 1.4),
+            opacity: colorOnly ? 0 : 0.9,
+            fillColor: color,
+            fillOpacity: fillOpacity
           }
         }
       ).addTo(map);
@@ -213,9 +254,11 @@
     if (zoom < 7.5) {
       list = features.filter(function (f) { return f.properties && f.properties.place === "city"; });
     }
-    list = list.slice(0, zoom < 7.5 ? 30 : 110);
+    var maxLabels = zoom < 7.5 ? 45 : 120;
+    var placed = [];
     var markers = [];
     list.forEach(function (feature) {
+      if (markers.length >= maxLabels) return;
       var geometry = feature.geometry || {};
       if (geometry.type !== "Point") return;
       var coords = geometry.coordinates || [];
@@ -223,6 +266,11 @@
       var props = feature.properties || {};
       if (!props.name) return;
       var p = toDisplay(coords[0], coords[1]);
+      var screen = map.latLngToContainerPoint([p[1], p[0]]);
+      for (var j = 0; j < placed.length; j++) {
+        if (Math.abs(placed[j].x - screen.x) < 66 && Math.abs(placed[j].y - screen.y) < 24) return;
+      }
+      placed.push(screen);
       var icon = L.divIcon({
         className: "",
         html: '<span class="ov-city-label' + (props.place === "town" ? " is-town" : "") + '">' +
@@ -259,9 +307,11 @@
     setStatus(
       (meta.mode_label || MODE_LABELS[state.mode]) +
         (motorized() ? " · " + (ROAD_LABELS[state.roadPref] || "") : "") +
-        " · 城市 " + (meta.city_count || 0) + " 个",
+        " · " + state.hours + "h · 城市 " + (meta.city_count || 0) + " 个" +
+        (state.hours > 4 ? " · 远距离可能受数据范围截断" : ""),
       "ok"
     );
+    updateLegend();
     var badge = $("isoBadge");
     if (badge) badge.hidden = false;
     updateSettingsUi();
@@ -284,7 +334,7 @@
       body: JSON.stringify({
         lat: state.lat,
         lon: state.lon,
-        minutes: MINUTES,
+        minutes: minutesForHours(state.hours),
         mode: state.mode,
         road_pref: state.roadPref,
         avoid_tolls: state.avoidTolls,
@@ -417,6 +467,13 @@
       updateSettingsUi();
       if (state.open) fetchIsochrone(true);
     });
+    var hours = $("ovHours");
+    if (hours) hours.addEventListener("change", function () {
+      readSettings();
+      updateSettingsUi();
+      updateLegend();
+      if (state.open) fetchIsochrone(true);
+    });
     ["ovAvoidTolls", "ovAvoidFerries", "ovAvoidUnpaved"].forEach(function (id) {
       var el = $(id);
       if (el) el.addEventListener("change", function () {
@@ -441,6 +498,9 @@
   }
 
   function boot() {
+    readSettings();
+    updateSettingsUi();
+    updateLegend();
     bind();
   }
 

@@ -15,7 +15,7 @@ name: maptrack-merger
 services:
   maptrack:
     build: .
-    image: maptrack-merger:1.5.1
+    image: maptrack-merger:1.6.0
     container_name: maptrack-merger
     ports:
       - "${MAPTRACK_PORT:-8000}:8000"

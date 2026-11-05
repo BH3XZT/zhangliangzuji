@@ -16,7 +16,7 @@ if [ -f "$ROOT_DIR/.env" ]; then
   set +a
 fi
 DATA_DIR="${DATA_DIR:-$ROOT_DIR/data/isochrone}"
-OSM_DIR="$DATA_DIR/valhalla"
+OSM_DIR="$DATA_DIR/osm"
 REGIONS="${REGIONS:-shanxi hebei henan shaanxi}"
 GEOFABRIK_BASE="${GEOFABRIK_BASE:-https://download.geofabrik.de/asia/china}"
 
@@ -29,7 +29,7 @@ fi
 
 echo "============================================================"
 echo " 下载 OSM 数据（区域：$REGIONS）"
-echo " 保存目录：$OSM_DIR"
+echo " 保存目录：$OSM_DIR（build_tiles.sh 会合并成一个 PBF 再构建）"
 echo " 说明：首次下载约 276MB（4 省），请耐心等待。"
 echo "============================================================"
 

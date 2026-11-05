@@ -136,6 +136,23 @@
               </div>
 
               <div class="ov-iso-field">
+                <label class="ov-iso-label" for="ovHours">时间范围</label>
+                <select class="ov-iso-select" id="ovHours">
+                  <option value="1">1 小时</option>
+                  <option value="2">2 小时</option>
+                  <option value="3">3 小时</option>
+                  <option value="4" selected>4 小时</option>
+                  <option value="5">5 小时</option>
+                  <option value="6">6 小时</option>
+                  <option value="7">7 小时</option>
+                  <option value="8">8 小时</option>
+                  <option value="9">9 小时</option>
+                  <option value="10">10 小时</option>
+                </select>
+                <p class="ov-iso-hint" id="ovHoursHint">显示 1 小时至所选小时的分层，最多 10 小时。</p>
+              </div>
+
+              <div class="ov-iso-field">
                 <span class="ov-iso-label">交通方式</span>
                 <div class="ov-iso-seg ov-iso-seg-4">
                   <label><input type="radio" name="ovTravelMode" value="car" checked><span>汽车</span></label>
@@ -167,12 +184,7 @@
                 <button type="button" class="btn ghost small" id="btnIsoReset">回到太原</button>
               </div>
 
-              <div class="ov-iso-legend">
-                <span><i style="background:#0b3d91"></i>60 分钟</span>
-                <span><i style="background:#1d4ed8"></i>120 分钟</span>
-                <span><i style="background:#3b82f6"></i>180 分钟</span>
-                <span><i style="background:#7dd3fc"></i>240 分钟</span>
-              </div>
+              <div class="ov-iso-legend" id="ovIsoLegend"></div>
               <p class="ov-iso-hint">开启后点击地图任意位置可更换出发点；轨迹图层会保留。</p>
             </aside>
 

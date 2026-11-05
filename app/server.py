@@ -53,7 +53,7 @@ _MIME = {
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "MapTrackMerger/1.5.1"
+    server_version = "MapTrackMerger/1.6"
     sys_version = ""
     protocol_version = "HTTP/1.1"
 

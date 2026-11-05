@@ -15,13 +15,14 @@
 v1.3 起等时圈功能合并进 maptrack-merger；v1.4 增加出行方式与道路偏好；**v1.5 起等时圈直接叠加在「地图总览」的轨迹合并地图上，不再使用独立地图页面。**
 
 - 在「地图总览」地图左上角点击 **「等时圈」**，等时圈图层叠加在当前轨迹地图上，轨迹图层保留
-- 以太原（37.8706, 112.5489）为中心，计算 60/120/180/240 分钟可达范围
+- 以太原（37.8706, 112.5489）为中心，**时间范围 1–10 小时可选**，按 1 小时分层显示可达范围
 - **等时圈显示**：同时显示（色块 + 边缘）/ 只显示颜色（隐藏边缘线）
 - **交通方式**：汽车、摩托车、自行车、步行，后端切换 Valhalla costing
 - **道路偏好**：高速优先、国道/主干优先、均衡、避开高速；可叠加避开收费、避开轮渡、避开非铺装路
 - 复用现有 Leaflet 地图与底图，叠加 OSM 中文城市标注、绿色脉冲起点；水系默认隐藏
 - Valhalla 作为同一个 `docker-compose.yml` 里的可选 `isochrone` profile 运行
-- 默认只下载山西/河北/河南/陕西约 276MB 的省级 OSM 数据，适合 8G–16G 内存的飞牛 NAS
+- 默认只下载山西/河北/河南/陕西约 276MB 的省级 OSM 数据；构建前会合并为单文件，避免省级边界接缝异常
+- 8G–16G 内存的飞牛 NAS 建议默认使用 4 小时以内；选择 5–10 小时时超出本地数据范围的部分可能被截断
 - 数据构建脚本在 [`scripts/isochrone/`](scripts/isochrone/)，部署步骤见下方「等时圈部署」
 
 > 不启动 Valhalla 时，轨迹合并、轨迹库、里程碑、同步等原有功能完全不受影响；
@@ -582,7 +583,7 @@ sudo bash scripts/isochrone/download_osm.sh
 ```
 
 默认下载山西、河北、河南、陕西。国内网络若无法直连 Geofabrik，请在电脑下载
-`*-latest.osm.pbf` 后上传到 `data/isochrone/valhalla/`，再继续下一步。
+`*-latest.osm.pbf` 后上传到 `data/isochrone/osm/`，再继续下一步。
 
 ### 3. 构建 Valhalla tiles（5–15 分钟）
 
@@ -590,11 +591,12 @@ sudo bash scripts/isochrone/download_osm.sh
 sudo bash scripts/isochrone/build_tiles.sh
 ```
 
-脚本会使用 4G 内存上限构建 `data/isochrone/valhalla/valhalla_tiles.tar`，
-并把等时圈时间上限自动调到 300 分钟。8G 内存 NAS 建议在 `.env` 中设置
-`VALHALLA_BUILD_MEMORY=3g`、`VALHALLA_THREADS=1`。
+脚本会先把 `data/isochrone/osm/` 下的省级 PBF **合并成一个 `region.osm.pbf`**，再构建
+`data/isochrone/valhalla/valhalla_tiles.tar`；单文件构建可避免河北等省级边界处的接缝异常。
+脚本使用 4G 内存上限，并把等时圈上限自动调到 660 分钟 / 12 个轮廓（支持 1–10 小时）。
+8G 内存 NAS 建议在 `.env` 中设置 `VALHALLA_BUILD_MEMORY=3g`、`VALHALLA_THREADS=1`。
 
-### 4. 提取水系与城市点
+### 4. 提取城市点（水系默认不显示）
 
 ```bash
 sudo bash scripts/isochrone/extract_water_places.sh
@@ -667,7 +669,7 @@ docker compose up -d           # 用新镜像重启容器
 docker compose down
 
 # 2. 删除镜像（可选）
-docker rmi maptrack-merger:1.5.1
+docker rmi maptrack-merger:1.6.0
 
 # 3. 删除整个项目文件夹（含 data/，轨迹库与同步文件都在其中；如需保留请先备份 data 目录）
 ```
