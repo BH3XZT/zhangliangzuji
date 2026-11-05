@@ -4,7 +4,7 @@
 # 特点：后端为纯 Python 3.12 标准库实现，构建过程不执行 pip install、不访问 PyPI，
 #       只需要拉取基础镜像 python:3.12-slim 即可完成构建（国内网络/离线环境也能一键构建）。
 #
-# 构建：docker compose build   （或 docker build -t maptrack-merger:1.5.0 .）
+# 构建：docker compose build   （或 docker build -t maptrack-merger:1.5.1 .）
 # 运行：docker compose up -d   （默认宿主机端口 8000，数据目录挂载到 ./data）
 #
 # v2 说明：镜像内额外包含离线行政区划数据 geo/china_admin.json.gz（约 2.8MB，GCJ-02 简化边界），

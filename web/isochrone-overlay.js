@@ -19,9 +19,8 @@
     avoidTolls: false,
     avoidFerries: false,
     avoidUnpaved: false,
-    displayMode: "all",
+    renderMode: "both",
     isoLayers: [],
-    waterLayer: null,
     cityLayer: null,
     startMarker: null,
     cityFeatures: [],
@@ -67,10 +66,10 @@
   }
 
   function readSettings() {
-    var display = document.querySelector('input[name="ovDisplayMode"]:checked');
+    var render = document.querySelector('input[name="ovRenderMode"]:checked');
     var mode = document.querySelector('input[name="ovTravelMode"]:checked');
     var road = $("ovRoadPref");
-    if (display) state.displayMode = display.value;
+    if (render) state.renderMode = render.value;
     if (mode) state.mode = mode.value;
     if (road) state.roadPref = road.value;
     state.avoidTolls = !!($("ovAvoidTolls") && $("ovAvoidTolls").checked);
@@ -143,10 +142,6 @@
     if (!map) return;
     state.isoLayers.forEach(function (layer) { if (map.hasLayer(layer)) map.removeLayer(layer); });
     state.isoLayers = [];
-    if (state.waterLayer) {
-      if (map.hasLayer(state.waterLayer)) map.removeLayer(state.waterLayer);
-      state.waterLayer = null;
-    }
     if (state.cityLayer) {
       if (map.hasLayer(state.cityLayer)) map.removeLayer(state.cityLayer);
       state.cityLayer = null;
@@ -155,25 +150,6 @@
       if (map.hasLayer(state.startMarker)) map.removeLayer(state.startMarker);
       state.startMarker = null;
     }
-  }
-
-  function setLayerVisible(layer, visible) {
-    var map = getMap();
-    if (!map || !layer) return;
-    if (visible) {
-      if (!map.hasLayer(layer)) map.addLayer(layer);
-    } else if (map.hasLayer(layer)) {
-      map.removeLayer(layer);
-    }
-  }
-
-  function applyDisplayMode() {
-    var showIso = state.displayMode !== "origin";
-    var showOrigin = state.displayMode !== "destination";
-    state.isoLayers.forEach(function (layer) { setLayerVisible(layer, showIso); });
-    setLayerVisible(state.waterLayer, showIso);
-    setLayerVisible(state.cityLayer, showIso);
-    setLayerVisible(state.startMarker, showOrigin);
   }
 
   function drawStartMarker() {
@@ -206,13 +182,15 @@
     MINUTES.slice().sort(function (a, b) { return b - a; }).forEach(function (minutes) {
       var list = byMinutes[minutes];
       if (!list || !list.length) return;
+      var colorOnly = state.renderMode === "color";
       var layer = L.geoJSON(
         { type: "FeatureCollection", features: list },
         {
           style: {
+            stroke: !colorOnly,
             color: COLORS[minutes],
-            weight: minutes === 60 ? 2.2 : 1.6,
-            opacity: 0.92,
+            weight: colorOnly ? 0 : (minutes === 60 ? 2.2 : 1.6),
+            opacity: colorOnly ? 0 : 0.92,
             fillColor: COLORS[minutes],
             fillOpacity: 0.23
           }
@@ -220,15 +198,6 @@
       ).addTo(map);
       state.isoLayers.push(layer);
     });
-  }
-
-  function drawWater(features) {
-    var map = getMap();
-    if (!map || !features.length) return;
-    state.waterLayer = L.geoJSON(
-      { type: "FeatureCollection", features: features.map(convertFeature) },
-      { style: { color: "#1e3a8a", weight: 1.25, opacity: 0.7 } }
-    ).addTo(map);
   }
 
   function drawCities(features) {
@@ -244,7 +213,7 @@
     if (zoom < 7.5) {
       list = features.filter(function (f) { return f.properties && f.properties.place === "city"; });
     }
-    list = list.slice(0, zoom < 7.5 ? 50 : 160);
+    list = list.slice(0, zoom < 7.5 ? 30 : 110);
     var markers = [];
     list.forEach(function (feature) {
       var geometry = feature.geometry || {};
@@ -275,13 +244,10 @@
     clearLayers();
     var features = Array.isArray(data.features) ? data.features : [];
     var iso = features.filter(function (f) { return f.properties && f.properties.layer === "isochrone"; });
-    var water = features.filter(function (f) { return f.properties && f.properties.layer === "water"; });
     var cities = features.filter(function (f) { return f.properties && f.properties.layer === "city"; });
     drawIsochrone(iso);
-    drawWater(water);
     drawCities(cities);
     drawStartMarker();
-    applyDisplayMode();
 
     if (fit && data.meta && data.meta.bbox && data.meta.bbox.length === 4) {
       var a = toDisplay(data.meta.bbox[0], data.meta.bbox[1]);
@@ -293,7 +259,7 @@
     setStatus(
       (meta.mode_label || MODE_LABELS[state.mode]) +
         (motorized() ? " · " + (ROAD_LABELS[state.roadPref] || "") : "") +
-        " · 水系 " + (meta.water_count || 0) + " 条 · 城市 " + (meta.city_count || 0) + " 个",
+        " · 城市 " + (meta.city_count || 0) + " 个",
       "ok"
     );
     var badge = $("isoBadge");
@@ -323,7 +289,8 @@
         road_pref: state.roadPref,
         avoid_tolls: state.avoidTolls,
         avoid_ferries: state.avoidFerries,
-        avoid_unpaved: state.avoidUnpaved
+        avoid_unpaved: state.avoidUnpaved,
+        include_water: false
       })
     })
       .then(function (response) {
@@ -372,7 +339,6 @@
         state.lat = wgs[1];
         if (state.startMarker) map.removeLayer(state.startMarker);
         drawStartMarker();
-        applyDisplayMode();
         fetchIsochrone(true);
       });
       state.clickBound = true;
@@ -430,10 +396,12 @@
       fetchIsochrone(true);
     });
 
-    document.querySelectorAll('input[name="ovDisplayMode"]').forEach(function (input) {
+    document.querySelectorAll('input[name="ovRenderMode"]').forEach(function (input) {
       input.addEventListener("change", function () {
         readSettings();
-        applyDisplayMode();
+        if (state.open && state.raw) {
+          render(state.raw, false);
+        }
       });
     });
     document.querySelectorAll('input[name="ovTravelMode"]').forEach(function (input) {
@@ -460,7 +428,6 @@
 
     map.on("zoomend", function () {
       if (state.open && state.cityFeatures.length) drawCities(state.cityFeatures);
-      if (state.open) applyDisplayMode();
     });
 
     // 底图切换会改变显示坐标系（GCJ-02 / WGS-84），需要重新投影等时圈

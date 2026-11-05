@@ -124,15 +124,15 @@
                 <strong>城市自驾等时圈</strong>
                 <button type="button" class="ov-iso-close" id="btnIsoClose" aria-label="关闭等时圈">×</button>
               </div>
-              <div class="ov-iso-status" id="isoStatus">点击“开始计算”在轨迹地图上叠加等时圈</div>
+              <div class="ov-iso-status" id="isoStatus">打开后自动计算，点击地图可更换出发点</div>
 
               <div class="ov-iso-field">
-                <span class="ov-iso-label">到达地显示</span>
+                <span class="ov-iso-label">等时圈显示</span>
                 <div class="ov-iso-seg">
-                  <label><input type="radio" name="ovDisplayMode" value="all" checked><span>全部显示</span></label>
-                  <label><input type="radio" name="ovDisplayMode" value="origin"><span>出发地</span></label>
-                  <label><input type="radio" name="ovDisplayMode" value="destination"><span>目的地</span></label>
+                  <label><input type="radio" name="ovRenderMode" value="both" checked><span>同时显示</span></label>
+                  <label><input type="radio" name="ovRenderMode" value="color"><span>只显示颜色</span></label>
                 </div>
+                <p class="ov-iso-hint">同时显示 = 色块 + 边缘线；只显示颜色 = 隐藏边缘线，仅保留色块。</p>
               </div>
 
               <div class="ov-iso-field">
@@ -163,7 +163,7 @@
               </div>
 
               <div class="ov-iso-actions">
-                <button type="button" class="btn primary small" id="btnIsoCalc">开始计算</button>
+                <button type="button" class="btn primary small" id="btnIsoCalc">重新计算</button>
                 <button type="button" class="btn ghost small" id="btnIsoReset">回到太原</button>
               </div>
 
@@ -172,7 +172,6 @@
                 <span><i style="background:#1d4ed8"></i>120 分钟</span>
                 <span><i style="background:#3b82f6"></i>180 分钟</span>
                 <span><i style="background:#7dd3fc"></i>240 分钟</span>
-                <span><i class="river"></i>水系</span>
               </div>
               <p class="ov-iso-hint">开启后点击地图任意位置可更换出发点；轨迹图层会保留。</p>
             </aside>

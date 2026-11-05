@@ -378,6 +378,7 @@ def _assemble(
     avoid_tolls: bool,
     avoid_ferries: bool,
     avoid_unpaved: bool,
+    include_water: bool = False,
 ) -> dict:
     requested = sorted(minutes)
     iso_features: list[dict] = []
@@ -409,7 +410,7 @@ def _assemble(
     if not bbox:
         raise IsochroneError("无法计算等时圈包围盒", 502)
 
-    water = _filter_water(_get_layer(WATER_FILE), bbox)
+    water = _filter_water(_get_layer(WATER_FILE), bbox) if include_water else []
     cities = _filter_cities(_get_layer(PLACES_FILE), bbox)
     return {
         "ok": True,
@@ -425,6 +426,7 @@ def _assemble(
             "avoid_tolls": avoid_tolls,
             "avoid_ferries": avoid_ferries,
             "avoid_unpaved": avoid_unpaved,
+            "include_water": include_water,
             "bbox": bbox,
             "isochrone_count": len(iso_features),
             "water_count": len(water),
@@ -489,6 +491,8 @@ def isochrone_payload(payload: dict) -> dict:
     avoid_tolls = _as_bool(payload.get("avoid_tolls"))
     avoid_ferries = _as_bool(payload.get("avoid_ferries"))
     avoid_unpaved = _as_bool(payload.get("avoid_unpaved"))
+    # 默认不返回水系，减小响应体积；需要时显式传 include_water=true
+    include_water = _as_bool(payload.get("include_water"), False)
 
     raw_minutes = payload.get("minutes") or DEFAULT_MINUTES
     if not isinstance(raw_minutes, list):
@@ -510,7 +514,17 @@ def isochrone_payload(payload: dict) -> dict:
 
     lat = round(lat, 5)
     lon = round(lon, 5)
-    key = (lat, lon, tuple(minutes), mode, road_pref, avoid_tolls, avoid_ferries, avoid_unpaved)
+    key = (
+        lat,
+        lon,
+        tuple(minutes),
+        mode,
+        road_pref,
+        avoid_tolls,
+        avoid_ferries,
+        avoid_unpaved,
+        include_water,
+    )
     cached = _cache_get(key)
     if cached is not None:
         return cached
@@ -535,6 +549,7 @@ def isochrone_payload(payload: dict) -> dict:
         avoid_tolls,
         avoid_ferries,
         avoid_unpaved,
+        include_water,
     )
     _cache_put(key, result)
     return result
