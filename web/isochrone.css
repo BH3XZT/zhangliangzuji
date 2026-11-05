@@ -103,6 +103,55 @@ body { font-family: var(--font); color: var(--ink); background: #e2e8f0; -webkit
 .iso-meta span { font-size: 10px; color: var(--muted); }
 .iso-meta strong { font-size: 13px; font-variant-numeric: tabular-nums; }
 
+/* ---------- 出行设置面板 ---------- */
+
+.iso-settings {
+  position: absolute; z-index: 19; top: 158px; right: 16px; width: 318px;
+  max-height: calc(100vh - 190px); overflow: auto;
+  border: 1px solid var(--border); border-radius: 14px;
+  background: var(--panel); box-shadow: 0 18px 40px -28px rgba(15, 23, 42, .8);
+  backdrop-filter: blur(12px); color: #334155;
+}
+.iso-settings summary {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 14px; cursor: pointer; list-style: none;
+  font-size: 12.5px; font-weight: 700; color: #0f172a;
+}
+.iso-settings summary::-webkit-details-marker { display: none; }
+.iso-settings summary::after {
+  content: "⌄"; margin-left: auto; color: var(--muted); font-size: 13px;
+  transition: transform .15s;
+}
+.iso-settings[open] summary::after { transform: rotate(180deg); }
+.iso-settings-sub { color: var(--muted); font-size: 10px; font-weight: 400; margin-left: 2px; }
+.iso-settings-body { padding: 0 14px 13px; }
+.iso-field { margin-top: 11px; }
+.iso-label { display: block; margin-bottom: 6px; font-size: 11px; color: #475569; font-weight: 600; }
+.iso-seg {
+  display: flex; gap: 2px; padding: 2px; border-radius: 9px; background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+.iso-seg label { flex: 1 1 0; min-width: 0; cursor: pointer; }
+.iso-seg input { position: absolute; opacity: 0; pointer-events: none; }
+.iso-seg span {
+  display: block; padding: 5px 2px; border-radius: 7px; text-align: center;
+  font-size: 10.5px; color: #64748b; white-space: nowrap; transition: background .15s, color .15s;
+}
+.iso-seg input:checked + span { background: #fff; color: var(--blue-900); font-weight: 700; box-shadow: 0 1px 4px rgba(15, 23, 42, .16); }
+.iso-seg label:hover span { color: #0f172a; }
+.iso-select {
+  width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #dbe3ee;
+  background: #fff; color: #0f172a; font: inherit; font-size: 11.5px; outline: none;
+}
+.iso-select:focus { border-color: #7dd3fc; box-shadow: 0 0 0 2px rgba(56, 189, 248, .18); }
+.iso-select:disabled { background: #f8fafc; color: #94a3b8; }
+.iso-field-hint { margin: 5px 0 0; font-size: 9.5px; line-height: 1.55; color: #94a3b8; }
+.iso-checks { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; }
+.iso-checks label { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; color: #475569; cursor: pointer; }
+.iso-checks input { width: 12px; height: 12px; accent-color: var(--blue-800); }
+.iso-checks input:disabled { opacity: .45; }
+.iso-checks label:has(input:disabled) { color: #94a3b8; cursor: not-allowed; }
+
 .city-label {
   padding: 2px 7px; border-radius: 7px; border: 1px solid rgba(11,61,145,.28);
   background: rgba(255,255,255,.94); color: #0b3d91; font-size: 11px; font-weight: 600;
@@ -166,6 +215,9 @@ body { font-family: var(--font); color: var(--ink); background: #e2e8f0; -webkit
   .iso-brand-text p { font-size: 10px; }
   .iso-btn { padding: 7px 10px; font-size: 12px; }
   .iso-status { top: 84px; left: 10px; font-size: 11px; }
+  .iso-settings { top: 122px; left: 10px; right: 10px; width: auto; max-height: 52vh; }
+  .iso-settings summary { padding: 9px 12px; }
+  .iso-settings-body { padding: 0 12px 11px; }
   .iso-meta { display: none; }
   .iso-legend { left: 10px; bottom: 38px; width: 174px; padding: 10px 12px; }
   .iso-overnight { right: 10px; bottom: 38px; padding: 8px 12px; }

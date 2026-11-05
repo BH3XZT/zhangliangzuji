@@ -5,6 +5,13 @@
   var DEFAULT_CENTER = { lat: 37.8706, lon: 112.5489 };
   var MINUTES = [60, 120, 180, 240];
   var COLORS = { 60: "#0b3d91", 120: "#1d4ed8", 180: "#3b82f6", 240: "#7dd3fc" };
+  var MODE_LABELS = { car: "汽车", motorcycle: "摩托车", bike: "自行车", walk: "步行" };
+  var ROAD_LABELS = {
+    highway: "高速优先",
+    national: "国道/主干优先",
+    balanced: "均衡",
+    avoid_highway: "避开高速"
+  };
 
   var state = {
     lat: DEFAULT_CENTER.lat,
@@ -15,7 +22,13 @@
     cityLayer: null,
     startMarker: null,
     cityFeatures: [],
-    requestId: 0
+    requestId: 0,
+    mode: "car",
+    roadPref: "balanced",
+    avoidTolls: false,
+    avoidFerries: false,
+    avoidUnpaved: false,
+    displayMode: "all"
   };
 
   function $(id) { return document.getElementById(id); }
@@ -52,6 +65,64 @@
     });
   }
 
+  /* ------------------------- 设置读取 ------------------------- */
+
+  function readSettings() {
+    var display = document.querySelector('input[name="displayMode"]:checked');
+    var mode = document.querySelector('input[name="travelMode"]:checked');
+    var road = $("roadPref");
+    if (display) state.displayMode = display.value;
+    if (mode) state.mode = mode.value;
+    if (road) state.roadPref = road.value;
+    state.avoidTolls = !!($("avoidTolls") && $("avoidTolls").checked);
+    state.avoidFerries = !!($("avoidFerries") && $("avoidFerries").checked);
+    state.avoidUnpaved = !!($("avoidUnpaved") && $("avoidUnpaved").checked);
+  }
+
+  function motorizedMode() {
+    return state.mode === "car" || state.mode === "motorcycle";
+  }
+
+  function updateSettingsUI() {
+    var motorized = motorizedMode();
+    var road = $("roadPref");
+    var tolls = $("avoidTolls");
+    var unpaved = $("avoidUnpaved");
+    if (road) road.disabled = !motorized;
+    if (tolls) tolls.disabled = !motorized;
+    if (unpaved) unpaved.disabled = !motorized;
+
+    var roadHint = $("roadHint");
+    if (roadHint) {
+      roadHint.textContent = motorized
+        ? "Valhalla 没有国道独立分类，国道/主干优先用高速与主干路权重近似；避开收费会自动把收费权重设为 0。"
+        : "步行 / 自行车不使用“道路偏好”和收费选项，仍可避开轮渡。";
+    }
+    var modeHint = $("modeHint");
+    if (modeHint) {
+      modeHint.textContent = motorized
+        ? "汽车/摩托车支持高速权重、避开收费、避开非铺装路；步行/自行车使用各自的路网。"
+        : "自行车更偏好道路与低坡度；步行使用人行道/步道网络。";
+    }
+
+    var badgeTitle = $("badgeTitle");
+    var badgeSub = $("badgeSub");
+    if (badgeTitle && badgeSub) {
+      if (state.mode === "walk") {
+        badgeTitle.textContent = "4h 步行范围";
+        badgeSub.textContent = "轻松可达";
+      } else if (state.mode === "bike") {
+        badgeTitle.textContent = "4h 骑行范围";
+        badgeSub.textContent = "量力而行";
+      } else {
+        badgeTitle.textContent = "4h 内可达";
+        badgeSub.textContent = "建议过夜";
+      }
+    }
+  }
+
+  /* ------------------------- 地图与图层 ------------------------- */
+
   function initMap() {
     var map = L.map("map", {
       zoomControl: false,
@@ -83,6 +154,24 @@
     window.__iso = state;
   }
 
+  function setLayerVisible(layer, visible) {
+    if (!layer || !state.map) return;
+    if (visible) {
+      if (!state.map.hasLayer(layer)) state.map.addLayer(layer);
+    } else if (state.map.hasLayer(layer)) {
+      state.map.removeLayer(layer);
+    }
+  }
+
+  function applyDisplayMode() {
+    var showIso = state.displayMode !== "origin";
+    var showOrigin = state.displayMode !== "destination";
+    state.isoLayers.forEach(function (layer) { setLayerVisible(layer, showIso); });
+    setLayerVisible(state.waterLayer, showIso);
+    setLayerVisible(state.cityLayer, showIso);
+    setLayerVisible(state.startMarker, showOrigin);
+  }
+
   function drawStartMarker() {
     if (!state.map) return;
     if (state.startMarker) state.map.removeLayer(state.startMarker);
@@ -97,6 +186,7 @@
       interactive: false,
       keyboard: false
     }).addTo(state.map);
+    applyDisplayMode();
   }
 
   function clearIsoLayers() {
@@ -197,6 +287,7 @@
     drawIsochrone(iso);
     drawWater(water);
     drawCityLabels(cities);
+    applyDisplayMode();
 
     var meta = data.meta || {};
     var metaCard = $("metaCard");
@@ -223,14 +314,24 @@
 
   function fetchIsochrone() {
     var requestId = ++state.requestId;
+    readSettings();
     showLoading(true);
     hideError();
-    setStatus("正在计算自驾等时圈…", "busy");
+    setStatus("正在计算" + MODE_LABELS[state.mode] + "等时圈…", "busy");
 
     fetch("/api/isochrone", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lat: state.lat, lon: state.lon, minutes: MINUTES })
+      body: JSON.stringify({
+        lat: state.lat,
+        lon: state.lon,
+        minutes: MINUTES,
+        mode: state.mode,
+        road_pref: state.roadPref,
+        avoid_tolls: state.avoidTolls,
+        avoid_ferries: state.avoidFerries,
+        avoid_unpaved: state.avoidUnpaved
+      })
     })
       .then(function (response) {
         return response.json().then(function (data) {
@@ -244,7 +345,12 @@
         if (requestId !== state.requestId) return;
         applyData(data);
         var meta = data.meta || {};
-        setStatus("等时圈已生成 · 水系 " + (meta.water_count || 0) + " 条 · 城市 " + (meta.city_count || 0) + " 个", "ok");
+        var roadText = motorizedMode() ? " · " + (ROAD_LABELS[state.roadPref] || meta.road_pref_label || "") : "";
+        setStatus(
+          (meta.mode_label || MODE_LABELS[state.mode]) + roadText +
+            " · 水系 " + (meta.water_count || 0) + " 条 · 城市 " + (meta.city_count || 0) + " 个",
+          "ok"
+        );
         showLoading(false);
       })
       .catch(function (error) {
@@ -284,7 +390,15 @@
       .catch(function () { return true; });
   }
 
-  function bindButtons() {
+  function onSettingChanged(requery) {
+    readSettings();
+    updateSettingsUI();
+    if (requery) {
+      fetchIsochrone();
+    }
+  }
+
+  function bindControls() {
     var refresh = $("btnRefresh");
     if (refresh) refresh.addEventListener("click", fetchIsochrone);
 
@@ -303,11 +417,34 @@
       hideError();
       fetchIsochrone();
     });
+
+    document.querySelectorAll('input[name="displayMode"]').forEach(function (input) {
+      input.addEventListener("change", function () {
+        readSettings();
+        applyDisplayMode();
+      });
+    });
+
+    document.querySelectorAll('input[name="travelMode"]').forEach(function (input) {
+      input.addEventListener("change", function () { onSettingChanged(true); });
+    });
+
+    var road = $("roadPref");
+    if (road) road.addEventListener("change", function () { onSettingChanged(true); });
+    ["avoidTolls", "avoidFerries", "avoidUnpaved"].forEach(function (id) {
+      var el = $(id);
+      if (el) el.addEventListener("change", function () { onSettingChanged(true); });
+    });
+
+    var settings = $("settings");
+    if (settings && window.innerWidth < 720) settings.open = false;
   }
 
   function boot() {
+    readSettings();
     buildLegend();
-    bindButtons();
+    bindControls();
+    updateSettingsUI();
     initMap();
     checkStatus().then(function (available) {
       if (available) fetchIsochrone();

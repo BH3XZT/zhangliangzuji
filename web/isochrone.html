@@ -38,6 +38,52 @@
     <span id="statusText">正在加载等时圈…</span>
   </div>
 
+  <details class="iso-settings" id="settings" open>
+    <summary>
+      <span>出行设置</span>
+      <span class="iso-settings-sub">交通 / 道路</span>
+    </summary>
+    <div class="iso-settings-body">
+      <div class="iso-field">
+        <span class="iso-label">到达地显示</span>
+        <div class="iso-seg" id="displaySeg">
+          <label><input type="radio" name="displayMode" value="all" checked><span>全部显示</span></label>
+          <label><input type="radio" name="displayMode" value="origin"><span>出发地</span></label>
+          <label><input type="radio" name="displayMode" value="destination"><span>目的地</span></label>
+        </div>
+        <p class="iso-field-hint">目的地指等时圈可达范围；出发地指绿色起点标记。</p>
+      </div>
+
+      <div class="iso-field">
+        <span class="iso-label">交通方式</span>
+        <div class="iso-seg" id="modeSeg">
+          <label><input type="radio" name="travelMode" value="car" checked><span>汽车</span></label>
+          <label><input type="radio" name="travelMode" value="motorcycle"><span>摩托车</span></label>
+          <label><input type="radio" name="travelMode" value="bike"><span>自行车</span></label>
+          <label><input type="radio" name="travelMode" value="walk"><span>步行</span></label>
+        </div>
+      </div>
+
+      <div class="iso-field">
+        <label class="iso-label" for="roadPref">道路偏好</label>
+        <select id="roadPref" class="iso-select">
+          <option value="highway">高速优先</option>
+          <option value="national">国道 / 主干优先</option>
+          <option value="balanced" selected>均衡</option>
+          <option value="avoid_highway">避开高速</option>
+        </select>
+        <p class="iso-field-hint" id="roadHint">Valhalla 没有国道独立分类，国道/主干优先使用高速与主干路权重近似。</p>
+      </div>
+
+      <div class="iso-checks">
+        <label><input type="checkbox" id="avoidTolls">避开收费</label>
+        <label><input type="checkbox" id="avoidFerries">避开轮渡</label>
+        <label><input type="checkbox" id="avoidUnpaved">避开非铺装路</label>
+      </div>
+      <p class="iso-field-hint" id="modeHint">道路偏好与收费/非铺装选项主要适用于汽车、摩托车。</p>
+    </div>
+  </details>
+
   <aside class="iso-legend" aria-label="图例">
     <h2>自驾可达时间</h2>
     <ul class="iso-legend-list" id="legendList"></ul>
@@ -51,8 +97,8 @@
   </aside>
 
   <aside class="iso-overnight">
-    <span class="iso-overnight-title">4h 内可达</span>
-    <span class="iso-overnight-sub">建议过夜</span>
+    <span class="iso-overnight-title" id="badgeTitle">4h 内可达</span>
+    <span class="iso-overnight-sub" id="badgeSub">建议过夜</span>
   </aside>
 
   <section class="iso-meta" id="metaCard" hidden>

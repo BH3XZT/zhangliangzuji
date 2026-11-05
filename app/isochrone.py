@@ -34,6 +34,34 @@ CONTOUR_HEX = {
 VALHALLA_COLORS = {minute: color.lstrip("#") for minute, color in CONTOUR_HEX.items()}
 CACHE_MAX = 32
 
+# 交通方式与 Valhalla costing 的映射
+MODE_LABELS = {
+    "walk": "步行",
+    "bike": "自行车",
+    "motorcycle": "摩托车",
+    "car": "汽车",
+}
+MODE_COSTING = {
+    "walk": "pedestrian",
+    "bike": "bicycle",
+    "motorcycle": "motorcycle",
+    "car": "auto",
+}
+
+# 道路偏好：Valhalla 没有“国道/省道”独立分类，这里用高速/收费道路权重近似表达
+ROAD_PREF_LABELS = {
+    "highway": "高速优先",
+    "national": "国道/主干优先",
+    "balanced": "均衡",
+    "avoid_highway": "避开高速",
+}
+ROAD_PREF_OPTIONS = {
+    "highway": {"use_highways": 1.0, "use_tolls": 1.0},
+    "national": {"use_highways": 0.7, "use_tolls": 0.8},
+    "balanced": {"use_highways": 0.5, "use_tolls": 0.5},
+    "avoid_highway": {"use_highways": 0.0, "use_tolls": 0.0},
+}
+
 
 class IsochroneError(Exception):
     def __init__(self, message: str, status: int = 400):
@@ -234,10 +262,58 @@ def _cache_put(key: tuple, value: dict) -> None:
             _cache.popitem(last=False)
 
 
-def _valhalla_request(lat: float, lon: float, minutes: list[int]) -> dict:
+def _as_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in ("1", "true", "yes", "on")
+    if value is None:
+        return default
+    return bool(value)
+
+
+def _costing_options(
+    mode: str,
+    road_pref: str,
+    avoid_tolls: bool,
+    avoid_ferries: bool,
+    avoid_unpaved: bool,
+) -> dict:
+    """把 UI 的道路偏好/避让选项翻译成 Valhalla costing_options。"""
+    options: dict = {}
+    if mode in ("car", "motorcycle"):
+        options.update(ROAD_PREF_OPTIONS[road_pref])
+        if avoid_tolls:
+            options["use_tolls"] = 0.0
+        options["use_ferry"] = 0.0 if avoid_ferries else 0.5
+        if avoid_unpaved:
+            options["exclude_unpaved"] = True
+    elif mode == "bike":
+        # 自行车不使用高速权重，改为道路/坡度偏好；收费/轮渡仍可控制
+        options["use_roads"] = 0.7
+        options["use_hills"] = 0.4
+        options["use_ferry"] = 0.0 if avoid_ferries else 0.5
+    else:  # walk
+        if avoid_ferries:
+            options["use_ferry"] = 0.0
+    return options
+
+
+def _valhalla_request(
+    lat: float,
+    lon: float,
+    minutes: list[int],
+    mode: str,
+    road_pref: str,
+    avoid_tolls: bool,
+    avoid_ferries: bool,
+    avoid_unpaved: bool,
+) -> dict:
+    costing = MODE_COSTING[mode]
+    options = _costing_options(mode, road_pref, avoid_tolls, avoid_ferries, avoid_unpaved)
     payload = {
         "locations": [{"lat": lat, "lon": lon}],
-        "costing": "auto",
+        "costing": costing,
         "contours": [
             {"time": float(minute), "color": VALHALLA_COLORS.get(minute, "0ea5e9")}
             for minute in minutes
@@ -247,11 +323,13 @@ def _valhalla_request(lat: float, lon: float, minutes: list[int]) -> dict:
         "generalize": 80,
         "show_locations": False,
     }
+    if options:
+        payload["costing_options"] = {costing: options}
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     request = urllib.request.Request(
         f"{VALHALLA_URL}/isochrone",
         data=body,
-        headers={"Content-Type": "application/json", "User-Agent": "MapTrackMerger/1.3"},
+        headers={"Content-Type": "application/json", "User-Agent": "MapTrackMerger/1.4"},
         method="POST",
     )
     try:
@@ -290,7 +368,17 @@ def _extract_minutes(feature: dict, index: int, requested: list[int]) -> int | N
     return requested[index] if index < len(requested) else None
 
 
-def _assemble(lat: float, lon: float, minutes: list[int], isochrone_data: dict) -> dict:
+def _assemble(
+    lat: float,
+    lon: float,
+    minutes: list[int],
+    isochrone_data: dict,
+    mode: str,
+    road_pref: str,
+    avoid_tolls: bool,
+    avoid_ferries: bool,
+    avoid_unpaved: bool,
+) -> dict:
     requested = sorted(minutes)
     iso_features: list[dict] = []
     boxes: list[list[float]] = []
@@ -330,6 +418,13 @@ def _assemble(lat: float, lon: float, minutes: list[int], isochrone_data: dict) 
         "meta": {
             "center": {"lat": lat, "lon": lon},
             "minutes": requested,
+            "mode": mode,
+            "mode_label": MODE_LABELS.get(mode, mode),
+            "road_pref": road_pref,
+            "road_pref_label": ROAD_PREF_LABELS.get(road_pref, road_pref),
+            "avoid_tolls": avoid_tolls,
+            "avoid_ferries": avoid_ferries,
+            "avoid_unpaved": avoid_unpaved,
             "bbox": bbox,
             "isochrone_count": len(iso_features),
             "water_count": len(water),
@@ -357,6 +452,8 @@ def status_payload() -> dict:
         "available": bool(water and places),
         "center": DEFAULT_CENTER,
         "minutes": DEFAULT_MINUTES,
+        "modes": [{"id": mode, "label": MODE_LABELS[mode]} for mode in MODE_COSTING],
+        "road_prefs": [{"id": key, "label": ROAD_PREF_LABELS[key]} for key in ROAD_PREF_OPTIONS],
     }
 
 
@@ -367,6 +464,8 @@ def config_payload() -> dict:
         "minutes": DEFAULT_MINUTES,
         "colors": CONTOUR_HEX,
         "valhalla_url": VALHALLA_URL,
+        "modes": [{"id": mode, "label": MODE_LABELS[mode]} for mode in MODE_COSTING],
+        "road_prefs": [{"id": key, "label": ROAD_PREF_LABELS[key]} for key in ROAD_PREF_OPTIONS],
     }
 
 
@@ -380,6 +479,16 @@ def isochrone_payload(payload: dict) -> dict:
         raise IsochroneError("lat / lon 必须是数字") from exc
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise IsochroneError("lat 或 lon 超出范围")
+
+    mode = str(payload.get("mode") or "car").strip().lower()
+    if mode not in MODE_COSTING:
+        raise IsochroneError("交通方式无效，可选：步行、自行车、摩托车、汽车")
+    road_pref = str(payload.get("road_pref") or "balanced").strip().lower()
+    if road_pref not in ROAD_PREF_OPTIONS:
+        raise IsochroneError("道路偏好无效，可选：高速优先、国道/主干优先、均衡、避开高速")
+    avoid_tolls = _as_bool(payload.get("avoid_tolls"))
+    avoid_ferries = _as_bool(payload.get("avoid_ferries"))
+    avoid_unpaved = _as_bool(payload.get("avoid_unpaved"))
 
     raw_minutes = payload.get("minutes") or DEFAULT_MINUTES
     if not isinstance(raw_minutes, list):
@@ -401,12 +510,31 @@ def isochrone_payload(payload: dict) -> dict:
 
     lat = round(lat, 5)
     lon = round(lon, 5)
-    key = (lat, lon, tuple(minutes))
+    key = (lat, lon, tuple(minutes), mode, road_pref, avoid_tolls, avoid_ferries, avoid_unpaved)
     cached = _cache_get(key)
     if cached is not None:
         return cached
 
-    data = _valhalla_request(lat, lon, minutes)
-    result = _assemble(lat, lon, minutes, data)
+    data = _valhalla_request(
+        lat,
+        lon,
+        minutes,
+        mode,
+        road_pref,
+        avoid_tolls,
+        avoid_ferries,
+        avoid_unpaved,
+    )
+    result = _assemble(
+        lat,
+        lon,
+        minutes,
+        data,
+        mode,
+        road_pref,
+        avoid_tolls,
+        avoid_ferries,
+        avoid_unpaved,
+    )
     _cache_put(key, result)
     return result
