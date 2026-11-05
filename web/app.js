@@ -4433,6 +4433,16 @@
     }
   }
 
+  // 暴露给等时圈图层脚本（web/isochrone-overlay.js）：复用同一个轨迹总览地图
+  window.__maptrack = {
+    get overviewMap() { return overviewMap; },
+    get displayCrs() { return state.displayCrs; },
+    get page() { return state.page; },
+    wgsToDisplay: wgsToDisplay,
+    displayToWgs: displayToWgs,
+    showPage: showPage
+  };
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

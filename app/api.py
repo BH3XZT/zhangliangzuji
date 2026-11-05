@@ -15,7 +15,7 @@ from .parsers import FORMAT_LIST, ParseError, parse_file
 from .parsers.common import iso_utc
 from .state import get_library, get_milestones, get_sync
 
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 MAX_FILES = 30
 MAX_TOTAL_POINTS = 2_000_000
 

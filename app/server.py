@@ -53,7 +53,7 @@ _MIME = {
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "MapTrackMerger/1.4"
+    server_version = "MapTrackMerger/1.5"
     sys_version = ""
     protocol_version = "HTTP/1.1"
 
@@ -181,9 +181,6 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path in ("/guide", "/guide.html"):
                 self._serve_file(WEB_DIR / "guide.html", 0)
-                return
-            if path in ("/isochrone", "/isochrone.html"):
-                self._serve_file(WEB_DIR / "isochrone.html", 0)
                 return
             if path.startswith("/static/"):
                 target = self._safe_join(WEB_DIR, path[len("/static/") :])

@@ -12,22 +12,22 @@
 
 ## 已集成：城市自驾等时圈地图
 
-v1.3 起，等时圈功能已经**合并进 maptrack-merger 本身**，不是单独的前端/后端项目；v1.4 进一步增加出行方式与道路偏好：
+v1.3 起等时圈功能合并进 maptrack-merger；v1.4 增加出行方式与道路偏好；**v1.5 起等时圈直接叠加在「地图总览」的轨迹合并地图上，不再使用独立地图页面。**
 
-- 主界面顶部导航新增 **「等时圈」** 入口，页面地址 `/isochrone.html`
+- 在「地图总览」地图左上角点击 **「等时圈」**，等时圈图层叠加在当前轨迹地图上，轨迹图层保留
 - 以太原（37.8706, 112.5489）为中心，计算 60/120/180/240 分钟可达范围
 - **到达地显示开关**：全部显示 / 只显示出发地 / 只显示目的地（等时圈可达范围）
 - **交通方式**：汽车、摩托车、自行车、步行，后端切换 Valhalla costing
 - **道路偏好**：高速优先、国道/主干优先、均衡、避开高速；可叠加避开收费、避开轮渡、避开非铺装路
-- 复用现有 Leaflet + OpenStreetMap 底图，叠加 OSM 河流水系、中文城市标注、绿色脉冲起点
+- 复用现有 Leaflet 地图与底图，叠加 OSM 河流水系、中文城市标注、绿色脉冲起点
 - Valhalla 作为同一个 `docker-compose.yml` 里的可选 `isochrone` profile 运行
 - 默认只下载山西/河北/河南/陕西约 276MB 的省级 OSM 数据，适合 8G–16G 内存的飞牛 NAS
 - 数据构建脚本在 [`scripts/isochrone/`](scripts/isochrone/)，部署步骤见下方「等时圈部署」
 
 > 不启动 Valhalla 时，轨迹合并、轨迹库、里程碑、同步等原有功能完全不受影响；
-> 打开等时圈页面会提示先启动等时圈服务。
+> 点击地图上的「等时圈」按钮会提示先启动等时圈服务。
 
-![等时圈地图（集成在 maptrack-merger 内）](docs/screenshot-09-isochrone.png)
+![等时圈叠加在轨迹合并地图上](docs/screenshot-09-isochrone.png)
 
 - 无需安装 Python、Node.js，无需 `pip install`，构建时只需要拉取一个基础镜像
 - 数据保存在本地/私有 NAS 的 `data/` 目录，不经过任何云端
@@ -538,9 +538,8 @@ sudo chown -R 10001:10001 data
 │   ├── mobile.css
 │   ├── mobile.js
 │   ├── crs.js              # 前端坐标系转换（window.CRS）
-│   ├── isochrone.html      # v1.3 等时圈地图页
-│   ├── isochrone.css
-│   ├── isochrone.js
+│   ├── isochrone-overlay.css # v1.5 等时圈叠加层样式
+│   ├── isochrone-overlay.js  # v1.5 在轨迹总览地图上绘制等时圈
 │   └── vendor/             # Leaflet 1.9.4 与 qrcode 本地文件
 ├── scripts/                # v1.3 等时圈数据构建脚本（不进镜像）
 │   └── isochrone/          # 下载 OSM、构建 tiles、提取水系/城市点
@@ -618,17 +617,20 @@ sudo docker compose --profile isochrone up -d --build
 sudo docker compose up -d --build
 ```
 
-### 6. 访问等时圈页面
+### 6. 在地图总览上打开等时圈
+
+打开地图总览：
 
 ```
-http://<NAS局域网IP>:<MAPTRACK_PORT>/isochrone.html
+http://<NAS局域网IP>:<MAPTRACK_PORT>/#overview
 ```
 
-默认是 `http://localhost:8000/isochrone.html`；飞牛 NAS 上我们使用
-`http://192.168.31.219:18000/isochrone.html`。
+在轨迹合并地图的左上角点击 **「等时圈」** 按钮，等时圈会作为图层叠加在当前轨迹地图上，轨迹图层继续保留；再次点击关闭。
 
-> 主界面顶部导航也有「等时圈」入口。未启动 Valhalla 或未生成数据时，
-> 页面会显示明确提示，不影响轨迹库、里程碑、同步等原有功能。
+默认地址示例：`http://localhost:8000/#overview`；飞牛 NAS 上使用
+`http://192.168.31.219:18000/#overview`。
+
+> 未启动 Valhalla 或未生成数据时，面板会显示明确提示，不影响轨迹库、里程碑、同步等原有功能。
 
 ## 升级与卸载
 
@@ -665,7 +667,7 @@ docker compose up -d           # 用新镜像重启容器
 docker compose down
 
 # 2. 删除镜像（可选）
-docker rmi maptrack-merger:1.4.0
+docker rmi maptrack-merger:1.5.0
 
 # 3. 删除整个项目文件夹（含 data/，轨迹库与同步文件都在其中；如需保留请先备份 data 目录）
 ```
