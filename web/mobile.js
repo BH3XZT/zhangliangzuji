@@ -82,10 +82,30 @@
 
   function cacheDom() {
     ['tokenStatus', 'fileInput', 'dropZone', 'fileList', 'fileCount', 'btnUpload', 'progressWrap',
-      'progressBar', 'progressText', 'resultCard', 'resultBody', 'resultTime', 'btnAgain', 'toast'
+      'progressBar', 'progressText', 'resultCard', 'resultBody', 'resultTime', 'btnAgain', 'toast',
+      'twoStepCard', 'btnTwoStepPick'
     ].forEach(function (id) {
       dom[id] = $(id);
     });
+  }
+
+  function setupTwoStepMode() {
+    let app = '';
+    try {
+      app = (new URLSearchParams(window.location.search).get('app') || '').toLowerCase();
+    } catch (e) {
+      app = '';
+    }
+    if (app !== '2bulu' && app !== 'buli') return;
+    document.title = '两步路轨迹直传 · 地图轨迹合并';
+    const subtitle = document.querySelector('.m-brand-text p');
+    if (subtitle) subtitle.textContent = '两步路 GPX / KML → NAS 轨迹库';
+    if (dom.twoStepCard) dom.twoStepCard.hidden = false;
+    if (dom.btnTwoStepPick && dom.fileInput) {
+      dom.btnTwoStepPick.addEventListener('click', function () {
+        dom.fileInput.click();
+      });
+    }
   }
 
   function addFiles(fileList) {
@@ -314,6 +334,7 @@
 
   function init() {
     cacheDom();
+    setupTwoStepMode();
     state.token = readToken();
     if (dom.fileInput) dom.fileInput.accept = ACCEPT_EXTS;
     if (!state.token) {

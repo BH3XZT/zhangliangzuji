@@ -153,8 +153,7 @@
       scanning: false,
       timer: 0,
       status: null
-    }
-  };
+    }  };
 
   let L = null;
   let map = null;
@@ -3884,6 +3883,10 @@
         clear(dom.syncQrBox);
         dom.syncQrBox.appendChild(el('div', 'inbox-empty', '二维码加载失败，请点「刷新二维码」'));
       }
+      if (dom.sync2buluQrBox) {
+        clear(dom.sync2buluQrBox);
+        dom.sync2buluQrBox.appendChild(el('div', 'inbox-empty', '两步路二维码加载失败，请点「刷新二维码」'));
+      }
       toast('获取同步令牌失败：' + friendlyError(err), 'error', 6000);
     }).finally(function () {
       state.sync.loadingToken = false;
@@ -3892,8 +3895,7 @@
   }
 
   function renderSyncQR() {
-    if (!dom.syncQrBox) return;
-    clear(dom.syncQrBox);
+    if (!dom.syncQrBox && !dom.sync2buluQrBox) return;
     const url = state.sync.mobileUrl;
     if (dom.syncQrUrl) dom.syncQrUrl.textContent = url || '—';
     if (dom.syncMobileLink) {
@@ -3904,13 +3906,40 @@
         dom.syncMobileLink.hidden = true;
       }
     }
+    renderQrBox(dom.syncQrBox, url, '尚未生成二维码');
+    const twoStepUrl = addAppParam(url, '2bulu');
+    if (dom.sync2buluLink) {
+      if (twoStepUrl) {
+        dom.sync2buluLink.href = twoStepUrl;
+        dom.sync2buluLink.hidden = false;
+      } else {
+        dom.sync2buluLink.hidden = true;
+      }
+    }
+    renderQrBox(dom.sync2buluQrBox, twoStepUrl, '尚未生成两步路二维码');
+  }
+
+  function addAppParam(url, app) {
+    if (!url) return '';
+    try {
+      const parsed = new URL(url);
+      parsed.searchParams.set('app', app);
+      return parsed.toString();
+    } catch (e) {
+      return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'app=' + encodeURIComponent(app);
+    }
+  }
+
+  function renderQrBox(box, url, emptyText) {
+    if (!box) return;
+    clear(box);
     if (!url) {
-      dom.syncQrBox.appendChild(el('div', 'inbox-empty', '尚未生成二维码'));
+      box.appendChild(el('div', 'inbox-empty', emptyText || '尚未生成二维码'));
       return;
     }
     if (typeof window.QRCode === 'function') {
       try {
-        new window.QRCode(dom.syncQrBox, {
+        new window.QRCode(box, {
           text: url,
           width: 168,
           height: 168,
@@ -3919,10 +3948,10 @@
           correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 1
         });
       } catch (e) {
-        dom.syncQrBox.appendChild(el('div', 'inbox-empty', '二维码生成失败，可复制下方链接'));
+        box.appendChild(el('div', 'inbox-empty', '二维码生成失败，可复制上方链接'));
       }
     } else {
-      dom.syncQrBox.appendChild(el('div', 'inbox-empty', '二维码库未加载，请复制下方链接打开'));
+      box.appendChild(el('div', 'inbox-empty', '二维码库未加载，请复制上方链接打开'));
     }
   }
 
@@ -4365,6 +4394,7 @@
       'milestoneLegend', 'milestoneCrsTag', 'milestoneCoordReadout',
       'btnMilestoneGoImport', 'btnMilestoneEmptyImport',
       'syncQrBox', 'syncQrUrl', 'syncCountdown', 'syncMobileLink',
+      'sync2buluQrBox', 'sync2buluLink',
       'btnSyncRefreshToken', 'btnSyncRefreshStatus', 'syncInboxPath', 'syncCounts',
       'syncInboxList', 'btnSyncScan', 'syncRecentList', 'btnSyncRecentRefresh'
     ];

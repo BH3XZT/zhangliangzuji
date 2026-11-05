@@ -443,6 +443,28 @@
               <p class="form-hint">手机与 NAS / 电脑需在同一局域网；令牌 30 分钟有效，过期后点「刷新二维码」。</p>
             </section>
 
+            <section class="panel sync-card two-step-card">
+              <div class="panel-head">
+                <h2>两步路 · 扫码直传</h2>
+                <span class="badge ok">手机直传</span>
+              </div>
+              <div class="two-step-body">
+                <div class="qr-box two-step-qr" id="sync2buluQrBox">
+                  <div class="ms-loading"><span class="spinner" aria-hidden="true"></span><span>正在生成两步路二维码…</span></div>
+                </div>
+                <div class="two-step-info">
+                  <p class="two-step-lead">手机扫描二维码后，会打开<strong>两步路专用上传页</strong>；按页面提示从两步路导出 GPX/KML，选择文件即可直接上传到 NAS 轨迹库。</p>
+                  <ol class="two-step-steps">
+                    <li>两步路 App → 我的 → 轨迹，选择轨迹并「分享 / 更多 / 导出」为 GPX 或 KML。</li>
+                    <li>回到扫码打开的上传页，点击「选择两步路导出的文件」。</li>
+                    <li>上传成功后自动解析入库，可在电脑端「地图总览」查看。</li>
+                  </ol>
+                  <a class="sync-open-link" id="sync2buluLink" href="#" target="_blank" rel="noopener">在浏览器中打开两步路上传页 ↗</a>
+                  <p class="form-hint">与左侧通用二维码共用 30 分钟令牌；过期后点击「刷新二维码」即可同时刷新。</p>
+                </div>
+              </div>
+            </section>
+
             <section class="panel sync-card inbox-card">
               <div class="panel-head">
                 <h2>同步文件夹</h2>
