@@ -10,17 +10,21 @@
 
 适合部署在自己的电脑或家庭 NAS（如飞牛 fnOS）上：轨迹数据保存在本地 `data/` 目录，手机扫码即可上传，不上传任何云端服务。
 
-## 子项目：城市自驾等时圈地图（isochrone-drive-map）
+## 已集成：城市自驾等时圈地图
 
-本仓库新增了一个独立的 Docker Compose 子项目 [`isochrone-drive-map/`](isochrone-drive-map/README.md)：
+v1.3 起，等时圈功能已经**合并进 maptrack-merger 本身**，不是单独的前端/后端项目：
 
-- 以太原（37.8706, 112.5489）为中心，基于 Valhalla 计算 60/120/180/240 分钟自驾等时圈
-- 叠加本地 OSM 河流水系、中文城市标注，MapLibre GL JS + OpenStreetMap 底图
-- 三容器架构：Valhalla + FastAPI + Nginx，单端口对外（默认 8080）
+- 主界面顶部导航新增 **「等时圈」** 入口，页面地址 `/isochrone.html`
+- 以太原（37.8706, 112.5489）为中心，计算 60/120/180/240 分钟自驾可达范围
+- 复用现有 Leaflet + OpenStreetMap 底图，叠加 OSM 河流水系、中文城市标注、绿色脉冲起点
+- Valhalla 作为同一个 `docker-compose.yml` 里的可选 `isochrone` profile 运行
 - 默认只下载山西/河北/河南/陕西约 276MB 的省级 OSM 数据，适合 8G–16G 内存的飞牛 NAS
-- 详细部署步骤见 [isochrone-drive-map/README.md](isochrone-drive-map/README.md)
+- 数据构建脚本在 [`scripts/isochrone/`](scripts/isochrone/)，部署步骤见下方「等时圈部署」
 
-> 主项目（地图轨迹合并工具）与子项目互相独立，可分别部署。
+> 不启动 Valhalla 时，轨迹合并、轨迹库、里程碑、同步等原有功能完全不受影响；
+> 打开等时圈页面会提示先启动等时圈服务。
+
+![等时圈地图（集成在 maptrack-merger 内）](docs/screenshot-09-isochrone.png)
 
 - 无需安装 Python、Node.js，无需 `pip install`，构建时只需要拉取一个基础镜像
 - 数据保存在本地/私有 NAS 的 `data/` 目录，不经过任何云端
@@ -548,6 +552,72 @@ sudo chown -R 10001:10001 data
 ├── README.md               # 本文件
 └── 安装流程.md              # 从零安装 Docker、NAS 部署与故障排查详细教程
 ```
+
+## 等时圈部署（可选 profile）
+
+等时圈功能复用同一个 maptrack-merger 容器和同一个 `docker-compose.yml`，只需要额外启动 Valhalla：
+
+### 1. 配置环境变量
+
+```bash
+cd 地图轨迹合并工具
+cp .env.example .env
+# 按需修改 MAPTRACK_PORT / REGIONS / VALHALLA_THREADS
+```
+
+### 2. 下载 OSM 数据（约 276MB，3–15 分钟）
+
+```bash
+sudo bash scripts/isochrone/download_osm.sh
+```
+
+默认下载山西、河北、河南、陕西。国内网络若无法直连 Geofabrik，请在电脑下载
+`*-latest.osm.pbf` 后上传到 `data/isochrone/valhalla/`，再继续下一步。
+
+### 3. 构建 Valhalla tiles（5–15 分钟）
+
+```bash
+sudo bash scripts/isochrone/build_tiles.sh
+```
+
+脚本会使用 4G 内存上限构建 `data/isochrone/valhalla/valhalla_tiles.tar`，
+并把等时圈时间上限自动调到 300 分钟。8G 内存 NAS 建议在 `.env` 中设置
+`VALHALLA_BUILD_MEMORY=3g`、`VALHALLA_THREADS=1`。
+
+### 4. 提取水系与城市点
+
+```bash
+sudo bash scripts/isochrone/extract_water_places.sh
+```
+
+生成：
+
+- `data/isochrone/water.geojson`
+- `data/isochrone/places.geojson`
+
+### 5. 启动主服务 + Valhalla
+
+```bash
+sudo docker compose --profile isochrone up -d --build
+```
+
+如果只想使用原来的轨迹合并功能，不需要 Valhalla：
+
+```bash
+sudo docker compose up -d --build
+```
+
+### 6. 访问等时圈页面
+
+```
+http://<NAS局域网IP>:<MAPTRACK_PORT>/isochrone.html
+```
+
+默认是 `http://localhost:8000/isochrone.html`；飞牛 NAS 上我们使用
+`http://192.168.31.219:18000/isochrone.html`。
+
+> 主界面顶部导航也有「等时圈」入口。未启动 Valhalla 或未生成数据时，
+> 页面会显示明确提示，不影响轨迹库、里程碑、同步等原有功能。
 
 ## 升级与卸载
 

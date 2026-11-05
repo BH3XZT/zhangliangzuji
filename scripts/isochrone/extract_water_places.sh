@@ -3,22 +3,22 @@
 #
 # 使用 Alpine + osmium-tool + jq，不需要在飞牛宿主机安装 osmium。
 # 输出：
-#   data/water.geojson  河流/运河线
-#   data/places.geojson 城市点（name/name:zh）
+#   data/isochrone/water.geojson  河流/运河线
+#   data/isochrone/places.geojson 城市点（name/name:zh）
 #
 # 可选环境变量：
 #   WATERWAYS=river,canal        水系类型（默认 river+canal；可加 stream 但数据会很大）
 #   PLACES=city,town             城市类型（默认 city+town）
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 if [ -f "$ROOT_DIR/.env" ]; then
   set -a
   # shellcheck disable=SC1091
   . "$ROOT_DIR/.env"
   set +a
 fi
-DATA_DIR="${DATA_DIR:-$ROOT_DIR/data}"
+DATA_DIR="${DATA_DIR:-$ROOT_DIR/data/isochrone}"
 OSM_DIR="$DATA_DIR/valhalla"
 WATERWAYS="${WATERWAYS:-river,canal}"
 PLACES="${PLACES:-city,town}"
@@ -53,7 +53,7 @@ echo "============================================================"
 $DOCKER run --rm \
   --memory=4g \
   -v "$DATA_DIR:/data" \
-  -v "$ROOT_DIR/scripts:/scripts:ro" \
+  -v "$ROOT_DIR/scripts/isochrone:/scripts:ro" \
   -e "WATERWAYS=$WATERWAYS" \
   -e "PLACES=$PLACES" \
   "$IMAGE" bash -euc '

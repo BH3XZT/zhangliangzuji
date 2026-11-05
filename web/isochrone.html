@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b3d91">
+  <title>城市自驾等时圈 · maptrack-merger</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/vendor/leaflet.css">
+  <link rel="stylesheet" href="/static/isochrone.css">
+</head>
+<body>
+  <div id="map" aria-label="城市自驾等时圈地图"></div>
+
+  <header class="iso-topbar">
+    <div class="iso-brand">
+      <a class="iso-back" href="/" title="返回轨迹合并">←</a>
+      <div class="iso-brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </div>
+      <div class="iso-brand-text">
+        <h1>城市自驾等时圈</h1>
+        <p>太原 · 60 / 120 / 180 / 240 分钟</p>
+      </div>
+    </div>
+    <div class="iso-actions">
+      <button type="button" class="iso-btn" id="btnReset">回到太原</button>
+      <button type="button" class="iso-btn primary" id="btnRefresh">重新计算</button>
+    </div>
+  </header>
+
+  <div class="iso-status" id="status">
+    <span class="iso-dot"></span>
+    <span id="statusText">正在加载等时圈…</span>
+  </div>
+
+  <aside class="iso-legend" aria-label="图例">
+    <h2>自驾可达时间</h2>
+    <ul class="iso-legend-list" id="legendList"></ul>
+    <div class="iso-legend-sep"></div>
+    <ul class="iso-legend-list">
+      <li><i class="iso-swatch river" aria-hidden="true"></i>河流 / 运河</li>
+      <li><i class="iso-swatch city" aria-hidden="true"></i>城市标注</li>
+      <li><i class="iso-swatch start" aria-hidden="true"></i>出发点</li>
+    </ul>
+    <p class="iso-hint">点击地图任意位置，可更换出发点</p>
+  </aside>
+
+  <aside class="iso-overnight">
+    <span class="iso-overnight-title">4h 内可达</span>
+    <span class="iso-overnight-sub">建议过夜</span>
+  </aside>
+
+  <section class="iso-meta" id="metaCard" hidden>
+    <div><span>等时圈</span><strong id="metaIso">—</strong></div>
+    <div><span>水系线条</span><strong id="metaWater">—</strong></div>
+    <div><span>城市标注</span><strong id="metaCity">—</strong></div>
+  </section>
+
+  <div class="iso-loading" id="loading">
+    <div class="iso-spinner"></div>
+    <p>正在计算自驾等时圈…</p>
+    <span>首次请求需要几秒钟</span>
+  </div>
+
+  <div class="iso-error" id="errorToast" hidden>
+    <strong>计算失败</strong>
+    <p id="errorText"></p>
+    <button type="button" class="iso-btn" id="btnRetry">重试</button>
+  </div>
+
+  <footer class="iso-credit">
+    等时圈：Valhalla · 数据 © OpenStreetMap contributors · 底图 OpenStreetMap raster
+  </footer>
+
+  <script src="/static/vendor/leaflet.js"></script>
+  <script src="/static/isochrone.js"></script>
+</body>
+</html>

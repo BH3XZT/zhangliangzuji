@@ -2,20 +2,20 @@
 # 下载太原周边 300km 范围的 OSM 数据（默认山西/河北/河南/陕西 4 省，约 276MB）
 #
 # 用法：
-#   bash scripts/download_osm.sh
-#   REGIONS="shanxi hebei henan shaanxi inner-mongolia" bash scripts/download_osm.sh
+#   bash scripts/isochrone/download_osm.sh
+#   REGIONS="shanxi hebei henan shaanxi inner-mongolia" bash scripts/isochrone/download_osm.sh
 #
 # 说明：Geofabrik 不提供“按半径裁剪”的接口，这里用省级小范围 PBF，避免全国数据。
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 if [ -f "$ROOT_DIR/.env" ]; then
   set -a
   # shellcheck disable=SC1091
   . "$ROOT_DIR/.env"
   set +a
 fi
-DATA_DIR="${DATA_DIR:-$ROOT_DIR/data}"
+DATA_DIR="${DATA_DIR:-$ROOT_DIR/data/isochrone}"
 OSM_DIR="$DATA_DIR/valhalla"
 REGIONS="${REGIONS:-shanxi hebei henan shaanxi}"
 GEOFABRIK_BASE="${GEOFABRIK_BASE:-https://download.geofabrik.de/asia/china}"
@@ -58,4 +58,4 @@ echo ""
 echo "下载完成："
 du -sh "$OSM_DIR"/*.osm.pbf 2>/dev/null || true
 echo ""
-echo "下一步：sudo bash scripts/build_tiles.sh"
+echo "下一步：sudo bash scripts/isochrone/build_tiles.sh"

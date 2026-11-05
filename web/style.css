@@ -224,6 +224,14 @@ svg {
   box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.25);
 }
 
+/* 导航中的页面链接（如等时圈），保持与 tab 按钮一致 */
+a.main-tab-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .health-pill {
   display: flex;
   align-items: center;

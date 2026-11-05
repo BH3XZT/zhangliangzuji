@@ -2,17 +2,17 @@
 # 使用 Valhalla 官方 scripted 镜像构建路由 tiles。
 #
 # 首次构建会消耗较多 CPU/内存，约 5-15 分钟；请确保 Docker 可用，
-# 并且 data/valhalla 已通过 scripts/download_osm.sh 下载了 PBF。
+# 并且 data/isochrone/valhalla 已通过 scripts/isochrone/download_osm.sh 下载了 PBF。
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 if [ -f "$ROOT_DIR/.env" ]; then
   set -a
   # shellcheck disable=SC1091
   . "$ROOT_DIR/.env"
   set +a
 fi
-DATA_DIR="${DATA_DIR:-$ROOT_DIR/data}"
+DATA_DIR="${DATA_DIR:-$ROOT_DIR/data/isochrone}"
 OSM_DIR="$DATA_DIR/valhalla"
 IMAGE="${VALHALLA_IMAGE:-ghcr.io/valhalla/valhalla-scripted:latest}"
 THREADS="${VALHALLA_THREADS:-2}"
@@ -38,7 +38,7 @@ fi
 
 if ! ls "$OSM_DIR"/*.osm.pbf >/dev/null 2>&1; then
   echo "错误：$OSM_DIR 下没有 .osm.pbf 文件。" >&2
-  echo "请先运行：bash scripts/download_osm.sh" >&2
+  echo "请先运行：bash scripts/isochrone/download_osm.sh" >&2
   exit 1
 fi
 
@@ -94,4 +94,4 @@ echo ""
 echo "构建完成："
 ls -lh "$OSM_DIR"/valhalla_tiles.tar "$OSM_DIR"/valhalla.json 2>/dev/null || true
 echo ""
-echo "下一步：sudo bash scripts/extract_water_places.sh"
+echo "下一步：sudo bash scripts/isochrone/extract_water_places.sh"

@@ -7,7 +7,7 @@ import time
 import uuid
 from urllib.parse import quote
 
-from . import exporters, geo, merge
+from . import exporters, geo, isochrone, merge
 from .crs import CRS_IDS, CRS_LABELS, normalize_crs
 from .geo_admin import AdminGeoError
 from .library import LibraryError
@@ -15,7 +15,7 @@ from .parsers import FORMAT_LIST, ParseError, parse_file
 from .parsers.common import iso_utc
 from .state import get_library, get_milestones, get_sync
 
-VERSION = "1.1.0"
+VERSION = "1.3.0"
 MAX_FILES = 30
 MAX_TOTAL_POINTS = 2_000_000
 
@@ -380,3 +380,23 @@ def milestones_geojson_payload(crs_name: str = "GCJ02") -> dict:
         return get_milestones().geojson(crs_name)
     except AdminGeoError as exc:
         raise ApiError(str(exc), 503) from exc
+
+
+# ----------------------------------------------------------------------
+# v1.3：城市自驾等时圈
+# ----------------------------------------------------------------------
+
+
+def isochrone_status_payload() -> dict:
+    return isochrone.status_payload()
+
+
+def isochrone_config_payload() -> dict:
+    return isochrone.config_payload()
+
+
+def isochrone_payload(payload: dict) -> dict:
+    try:
+        return isochrone.isochrone_payload(payload)
+    except isochrone.IsochroneError as exc:
+        raise ApiError(exc.message, exc.status) from exc

@@ -53,7 +53,7 @@ _MIME = {
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "MapTrackMerger/1.1"
+    server_version = "MapTrackMerger/1.3"
     sys_version = ""
     protocol_version = "HTTP/1.1"
 
@@ -182,6 +182,9 @@ class Handler(BaseHTTPRequestHandler):
             if path in ("/guide", "/guide.html"):
                 self._serve_file(WEB_DIR / "guide.html", 0)
                 return
+            if path in ("/isochrone", "/isochrone.html"):
+                self._serve_file(WEB_DIR / "isochrone.html", 0)
+                return
             if path.startswith("/static/"):
                 target = self._safe_join(WEB_DIR, path[len("/static/") :])
                 if target is None:
@@ -228,6 +231,12 @@ class Handler(BaseHTTPRequestHandler):
                 crs_name = (query.get("crs") or ["GCJ02"])[0]
                 self._send_json(200, api.milestones_geojson_payload(crs_name))
                 return
+            if path == "/api/isochrone/status":
+                self._send_json(200, api.isochrone_status_payload())
+                return
+            if path == "/api/isochrone/config":
+                self._send_json(200, api.isochrone_config_payload())
+                return
             if path == "/favicon.ico":
                 self._send_bytes(204, b"", "image/x-icon")
                 return
@@ -257,6 +266,10 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path == "/api/export":
                 self._handle_export()
+                return
+            if path == "/api/isochrone":
+                payload = self._read_json()
+                self._send_json(200, api.isochrone_payload(payload))
                 return
             if path == "/api/library/add":
                 payload = self._read_json()

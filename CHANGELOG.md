@@ -1,5 +1,30 @@
 # 更新日志
 
+## v1.3.0 — 2026-11-05
+
+### 新增
+
+- **等时圈功能正式合并进 maptrack-merger 主应用**：主界面顶部新增「等时圈」入口，页面 `/isochrone.html`。
+- 复用现有 Leaflet + OpenStreetMap，展示 60/120/180/240 分钟自驾可达分层、OSM 河流水系、中文城市标注、绿色脉冲起点和「4h 内可达 建议过夜」浮层。
+- 后端新增 `/api/isochrone`、`/api/isochrone/status`、`/api/isochrone/config`，使用 Python 标准库请求 Valhalla，并带内存 LRU 缓存。
+- 同一个 `docker-compose.yml` 增加可选 `valhalla` 服务（profile `isochrone`），同一套 Compose 部署，不再需要独立前端/后端容器。
+- 新增 `scripts/isochrone/`：OSM 省级数据下载、Valhalla tiles 构建、水系/城市点提取。
+- 默认区域为太原周边山西/河北/河南/陕西约 276MB；构建脚本自动把等时圈上限调到 300 分钟。
+- 新增飞牛 NAS 等时圈部署说明、`.env.example` 和集成页面截图。
+
+### 变更
+
+- 主应用版本升级到 **1.3.0**，Docker 镜像标签同步为 `maptrack-merger:1.3.0`。
+- 移除独立的 `isochrone-drive-map/` 子项目目录，相关功能、脚本和页面全部并入主项目。
+- 主界面导航新增「等时圈」链接。
+
+### 修复
+
+- 修复移动端等时圈视野过大的问题（集成版使用响应式 fitBounds 内边距）。
+- 低缩放级别只显示主要城市标注，减少标签重叠。
+
+---
+
 ## v1.2.1 — 2026-11-05
 
 ### 修复
