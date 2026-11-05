@@ -517,6 +517,7 @@ sudo chown -R 10001:10001 data
 │   ├── state.py            # v2 进程级单例（轨迹库 / 同步 / 里程碑）
 │   ├── crs.py              # 坐标系转换（WGS-84 / GCJ-02 / BD-09）
 │   ├── geo.py              # haversine 距离、bbox、统计
+│   ├── isochrone.py        # v1.3 等时圈：Valhalla 代理、水系/城市合并、LRU 缓存
 │   ├── models.py           # 数据模型
 │   ├── merge.py            # 轨迹合并
 │   ├── exporters.py        # GPX / KML / GeoJSON / CSV / JSON 导出
@@ -534,15 +535,22 @@ sudo chown -R 10001:10001 data
 │   ├── mobile.css
 │   ├── mobile.js
 │   ├── crs.js              # 前端坐标系转换（window.CRS）
+│   ├── isochrone.html      # v1.3 等时圈地图页
+│   ├── isochrone.css
+│   ├── isochrone.js
 │   └── vendor/             # Leaflet 1.9.4 与 qrcode 本地文件
+├── scripts/                # v1.3 等时圈数据构建脚本（不进镜像）
+│   └── isochrone/          # 下载 OSM、构建 tiles、提取水系/城市点
 ├── samples/                # 示例轨迹（界面"示例数据"使用）
 ├── tests/                  # 后端单元测试（仅开发用，不进镜像）
 ├── docs/                   # 界面截图（README 预览用）
 ├── data/                   # 运行数据目录（挂载到容器 /app/data）
 │   ├── library/            # v2 轨迹库（首次运行后自动创建）
-│   └── inbox/              # v2 同步文件夹（首次运行后自动创建，含 processed/、failed/）
+│   ├── inbox/              # v2 同步文件夹（首次运行后自动创建，含 processed/、failed/）
+│   └── isochrone/          # v1.3 等时圈数据（PBF / tiles / water.geojson / places.geojson）
 ├── Dockerfile              # 镜像构建（无 pip 依赖）
-├── docker-compose.yml      # 一键启动编排
+├── docker-compose.yml      # 主服务 + 可选 valhalla profile
+├── .env.example            # 端口与等时圈构建参数示例
 ├── .dockerignore
 ├── .gitignore
 ├── start.bat               # Windows 一键启动
