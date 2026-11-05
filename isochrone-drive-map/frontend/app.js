@@ -262,9 +262,13 @@
     if (metaCity) metaCity.textContent = cityFeatures.length + " 个";
 
     if (meta.bbox && meta.bbox.length === 4) {
+      var isMobile = window.innerWidth < 720;
+      var padding = isMobile
+        ? { top: 96, bottom: 120, left: 16, right: 16 }
+        : { top: 120, bottom: 90, left: 260, right: 90 };
       map.fitBounds(
         [[meta.bbox[0], meta.bbox[1]], [meta.bbox[2], meta.bbox[3]]],
-        { padding: { top: 120, bottom: 90, left: 260, right: 90 }, maxZoom: 10, duration: 650 }
+        { padding: padding, maxZoom: isMobile ? 9 : 10, duration: 650 }
       );
     }
 
